@@ -1,0 +1,114 @@
+package org.agmas.noellesroles.init;
+
+import dev.doctor4t.ratatouille.util.registrar.SoundEventRegistrar;
+import net.minecraft.sounds.SoundEvent;
+import org.agmas.noellesroles.Noellesroles;
+
+public class NRSounds {
+
+    public static final SoundEventRegistrar registrar = new SoundEventRegistrar(Noellesroles.MOD_ID);
+    public static final SoundEvent GAMBER_DEATH = registrar.create("noellesroles.gamber_died");
+    public static final SoundEvent MUSIC_CLOCK = registrar.create("noellesroles.clock");
+    public static final SoundEvent GONGXI_FACAI = registrar.create("noellesroles.gongxifacai");
+    public static final SoundEvent TO_BE_CONTINUED = registrar.create("noellesroles.to_be_continued");
+    public static final SoundEvent HARPY_WELCOME = registrar.create("noellesroles.harpy_welcome");
+    public static final SoundEvent WIND = registrar.create("noellesroles.wind");
+    public static final SoundEvent JESTER_AMBIENT = registrar.create("noellesroles.jester");
+    public static final SoundEvent NYAN_CAT = registrar.create("noellesroles.nyan_cat");
+    /** 皮革噶的：Dream（Dream）疯魔模式专属追杀音乐（移植自 StarRailExpress）。 */
+    public static final SoundEvent MANHUNT_CHASE = registrar.create("noellesroles.manhunt_chase");
+    
+    public static final SoundEvent THMUSIC_UN_OWEN = registrar.create("noellesroles.who_kill_un_owen");
+    public static final SoundEvent TIME_STOP = registrar.create("noellesroles.time_stop");
+    public static final SoundEvent DIO_SPAWN = registrar.create("noellesroles.dio_spawn");
+    public static final SoundEvent TIME_START = registrar.create("noellesroles.time_start");
+    public static final SoundEvent PARTY_SKILL = registrar.create("noellesroles.party_skill");
+//    public static final SoundEvent ITEM_SYRINGE_STAB = registrar.create("item.syringe.stab");
+    public static final SoundEvent SHOTGUN_FIRE = registrar.create("noellesroles.shotgun_fire");
+    public static final SoundEvent SHORT_CIRCUIT = registrar.create("noellesroles.short_circuit");
+    public static final SoundEvent SHOTGUNU_COCK = registrar.create("noellesroles.shotgun_cock");
+    public static final SoundEvent RPG7_SHOOT = registrar.create("noellesroles.rpg7_shoot");
+    
+    // 疫使相关音效
+    public static final SoundEvent INFECTED_COUGH = registrar.create("noellesroles.cough");
+    public static final SoundEvent INFECTED_INFECT = registrar.create("noellesroles.infect");
+    public static final SoundEvent BEEP = registrar.create("noellesroles.role_mine_beep");
+    public static final SoundEvent SYRINGE_STAB = registrar.create("noellesroles.syringe_stab");
+    public static final SoundEvent C4_BEEP = registrar.create("noellesroles.c4_beep");
+    public static final SoundEvent MAFIA = registrar.create("noellesroles.mafia");
+    public static final SoundEvent BAKA_BAKA = registrar.create("plush.baka");
+    public static final SoundEvent WO_SHI_NAI_LONG = registrar.create("plush.nai_long");
+    public static final SoundEvent LEVEL = registrar.create("noellesroles.level");
+    public static final SoundEvent SNOW_STORM = registrar.create("noellesroles.winter_storm");
+    public static final SoundEvent SAND_STORM = registrar.create("noellesroles.dust_storm");
+    public static final SoundEvent BROKEN_ALARM = registrar.create("noellesroles.broken_alarm");
+    public static final SoundEvent CIRCUS_BACKGROUND = registrar.create("noellesroles.circus_background");
+    public static final SoundEvent A_MENG = registrar.create("noellesroles.a_meng");
+    public static final SoundEvent CIRCUS_INDOOR = registrar.create("noellesroles.dasiy_bell");
+    /**Fumo */
+    public static final SoundEvent SPBGCP_SOUND = registrar.create("plush.spbgcp");
+    public static final SoundEvent TANGYE_SOUND = registrar.create("plush.tangye");
+    public static final SoundEvent JIALE_WA_SOUND = registrar.create("plush.jiale_wa");
+    public static final SoundEvent WJCLB_SOUND = registrar.create("plush.wjclb");
+    public static final SoundEvent SLHCAT_SOUND = registrar.create("plush.slhcat");
+    public static final SoundEvent DONG_SOUND = registrar.create("plush.dong");
+    public static final SoundEvent DIUDIU_SOUND = registrar.create("plush.diudiu");
+
+    public static final SoundEvent GUO1_SOUND = registrar.create("plush.guo1");
+    public static final SoundEvent GUO2_SOUND = registrar.create("plush.guo2");
+    public static final SoundEvent GUO3_SOUND = registrar.create("plush.guo3");
+    public static final SoundEvent GUO4_SOUND = registrar.create("plush.guo4");
+
+    //egg
+    public static final SoundEvent HDBZQ_SOUND = registrar.create("plush.hdbzq");
+    //spbgcp
+    public static final SoundEvent SPBGCP_SOUND1 = registrar.create("plush.spbgcp1");
+    public static final SoundEvent SPBGCP_SOUND2 = registrar.create("plush.spbgcp2");
+    public static final SoundEvent SPBGCP_SOUND3 = registrar.create("plush.spbgcp3");
+    public static final SoundEvent SPBGCP_SOUND4 = registrar.create("plush.spbgcp4");
+
+
+    //熊孩子
+    public static final SoundEvent CHILD_LAUGH = registrar.create("noellesroles.child_laugh");
+    public static final SoundEvent FART = registrar.create("noellesroles.fart");
+    public static final SoundEvent FEI = registrar.create("noellesroles.fei");
+    public static final SoundEvent SQUEAKY_TOY = registrar.create("noellesroles.squeaky_toy");
+    public static final SoundEvent A = registrar.create("noellesroles.a");
+    //黑警
+    public static final SoundEvent CORRUPT_COP_TIME = registrar.create("noellesroles.corruptcoptime");
+
+    //绑匪审判阶段
+    public static final SoundEvent KIDNAPPER_JUDGMENT = registrar.create("noellesroles.kidnapper_judgment");
+
+    // 听觉干扰
+    public static final SoundEvent OPPOAFIVE = registrar.create("noellesroles.oppoafive");
+
+    // 消音手枪
+    public static final SoundEvent SILENCED_PISTOL_SHOOT = registrar.create("noellesroles.xiaoyinqiang");
+    public static final SoundEvent SILENCED_PISTOL_RELOAD = registrar.create("noellesroles.silenced_pistol_reload");
+
+    // 沙漠之鹰
+    public static final SoundEvent DESERT_EAGLE_SHOOT = registrar.create("noellesroles.shaying");
+    public static final SoundEvent DESERT_EAGLE_RELOAD = registrar.create("noellesroles.desert_eagle_reload");
+
+    // 嘉豪音乐
+    public static final SoundEvent JIAHAO_MUSIC_1 = registrar.create("noellesroles.jiahao_music_1");
+    public static final SoundEvent JIAHAO_MUSIC_2 = registrar.create("noellesroles.jiahao_music_2");
+    public static final SoundEvent JIAHAO_MUSIC_3 = registrar.create("noellesroles.jiahao_music_3");
+
+    // 神父咏诵：15 句台词槽位 + 咏诵循环 + 尾奏（音效文件暂缺，先占位注册）
+    public static final SoundEvent[] PRIEST_CHANT = new SoundEvent[15];
+    public static final SoundEvent PRIEST_CHANTING;
+    public static final SoundEvent PRIEST_ENDING;
+    static {
+        for (int i = 0; i < PRIEST_CHANT.length; i++) {
+            PRIEST_CHANT[i] = registrar.create("priest.chant." + String.format("%02d", i));
+        }
+        PRIEST_CHANTING = registrar.create("priest.chanting");
+        PRIEST_ENDING = registrar.create("priest.ending");
+    }
+
+    public static void initialize() {
+        registrar.registerEntries();
+    }
+}

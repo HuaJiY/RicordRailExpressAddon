@@ -1,0 +1,1038 @@
+package org.agmas.noellesroles.config;
+
+import com.google.gson.annotations.JsonAdapter;
+import io.wifi.ConfigCompact.ConfigClassHandler;
+import io.wifi.ConfigCompact.annotation.ConfigSync;
+import io.wifi.starrailexpress.api.SRERole;
+import io.wifi.starrailexpress.api.TMMRoles;
+import io.wifi.starrailexpress.game.GameConstants;
+import me.shedaniel.autoconfig.ConfigData;
+import me.shedaniel.autoconfig.annotation.Config;
+import me.shedaniel.autoconfig.annotation.ConfigEntry;
+import me.shedaniel.autoconfig.annotation.ConfigEntry.Category;
+import net.minecraft.resources.ResourceLocation;
+import org.agmas.harpymodloader.modifiers.HMLModifiers;
+import org.agmas.harpymodloader.modifiers.SREModifier;
+
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+
+@Config(name = "noellesroles")
+public class NoellesRolesConfig implements ConfigData {
+    /** Fake Steve event enable chance in ten-thousandths. */
+    @ConfigEntry.Category(value = "detail")
+    public int fakeSteveEnableChance = 1;
+
+    public static class SpawnInfo {
+        /**
+         * 最小启用玩家数。-1禁用
+         */
+        public int minEnabledPlayer = -1;
+        /**
+         * 启用概率，1 = 1/10000。-1禁用
+         */
+        public int enableChance = -1;
+        /**
+         * 最大启用玩家数。-1禁用
+         */
+        public int maxEnabledPlayer = -1;
+        /**
+         * 最大刷新数量
+         */
+        public int maxSpawn = 1;
+        /**
+         * 在什么地图刷新。为空全部
+         */
+        public ArrayList<String> map = new ArrayList<>();
+
+        public SpawnInfo addMaps(String... maps) {
+            for (var t : maps) {
+                map.add(t);
+            }
+            return this;
+        }
+
+        public SpawnInfo addMaps(ArrayList<String> maps) {
+            map.addAll(maps);
+            return this;
+        }
+
+        public SpawnInfo setMaps(ArrayList<String> maps) {
+            map.clear();
+            map.addAll(maps);
+            return this;
+        }
+
+        public SpawnInfo setMaps(String... maps) {
+            this.map.clear();
+            for (var t : maps) {
+                map.add(t);
+            }
+            return this;
+        }
+
+        public SpawnInfo setMaxEnabledPlayer(int num) {
+            this.maxEnabledPlayer = num;
+            return this;
+        }
+
+        public SpawnInfo setMinEnabledPlayer(int num) {
+            this.minEnabledPlayer = num;
+            return this;
+        }
+
+        public SpawnInfo setEnableChance(int num) {
+            this.enableChance = num;
+            return this;
+        }
+
+        public SpawnInfo setMax(int max) {
+            this.maxSpawn = max;
+            return this;
+        }
+
+        public SpawnInfo() {
+        }
+
+        public SpawnInfo(int defaultMinPlayer, int defaultMaxPlayer, int defaultEnableChance, int maxSpawn) {
+            this.minEnabledPlayer = defaultMinPlayer;
+            this.maxEnabledPlayer = defaultMaxPlayer;
+            this.enableChance = defaultEnableChance;
+            this.maxSpawn = maxSpawn;
+        }
+
+        public SpawnInfo(int defaultMinPlayer, int defaultMaxPlayer, int defaultEnableChance, int maxSpawn,
+                ArrayList<String> defaultMaps) {
+            this.minEnabledPlayer = defaultMinPlayer;
+            this.maxEnabledPlayer = defaultMaxPlayer;
+            this.maxSpawn = maxSpawn;
+            this.enableChance = defaultEnableChance;
+            this.map = new ArrayList<>(defaultMaps);
+        }
+    }
+
+    @JsonAdapter(RoleSpawnInfoEntriesAdapter.class)
+    public static class RoleSpawnInfoEntries {
+        public HashMap<ResourceLocation, SpawnInfo> maps = new HashMap<>();
+        public int type; // 自动根据 T 设置
+
+        // 无参构造（供 Gson 反序列化使用）
+        public RoleSpawnInfoEntries() {
+            this.type = 0; // 默认未知
+        }
+
+        public SpawnInfo getSpawnInfo(SREModifier modifier) {
+            return maps.getOrDefault(modifier.identifier(), null);
+        }
+
+        public SpawnInfo getSpawnInfo(SRERole role) {
+            return maps.getOrDefault(role.identifier(), null);
+        }
+
+        // 内部构造，用于工厂方法
+        private RoleSpawnInfoEntries(int type) {
+            this.type = type;
+        }
+
+        // 根据类型获取对应的 type 值
+        private static int getTypeForClass(Class<?> clazz) {
+            if (SRERole.class.isAssignableFrom(clazz)) {
+                return 1;
+            } else if (SREModifier.class.isAssignableFrom(clazz)) {
+                return 2;
+            }
+            return 0;
+        }
+
+        // 工厂方法：创建角色默认配置
+        public static RoleSpawnInfoEntries createDefaultRoleInfo() {
+            RoleSpawnInfoEntries obj = new RoleSpawnInfoEntries(getTypeForClass(SRERole.class));
+            for (var entry : TMMRoles.ROLES.entrySet()) {
+                SRERole role = entry.getValue();
+                if (!role.canSetSpawnInfoInConfig())
+                    continue;
+                obj.maps.put(entry.getKey(), new SpawnInfo(
+                        role.defaultEnableNeedPlayerCount,
+                        role.defaultEnableMaxPlayerCount,
+                        role.defaultEnableChance,
+                        role.defaultMaxCount,
+                        role.defaultSpawnMaps));
+            }
+            return obj;
+        }
+
+        // 工厂方法：创建修饰符默认配置
+        public static RoleSpawnInfoEntries createDefaultModifierInfo() {
+            RoleSpawnInfoEntries obj = new RoleSpawnInfoEntries(getTypeForClass(SREModifier.class));
+            for (SREModifier entry : HMLModifiers.MODIFIERS) {
+                if (!entry.canSetSpawnInfoInConfig())
+                    continue;
+                obj.maps.put(entry.identifier(), new SpawnInfo(
+                        entry.defaultNeedPlayerCount,
+                        entry.defaultMaxPlayerCount,
+                        entry.defaultEnableChance,
+                        entry.defaultMaxCount,
+                        entry.defaultSpawnMaps));
+            }
+            return obj;
+        }
+    }
+
+    public static ConfigClassHandler<NoellesRolesConfig> HANDLER = new ConfigClassHandler<>(
+            NoellesRolesConfig.class);
+
+    /**
+     * Whether insane players will randomly see people as morphed
+     */
+
+    public boolean insanePlayersSeeMorphs = true;
+
+    /**
+     * Areas that will spawn Ma Chen Xu and Guest Ghost. Use | to split maps
+     */
+
+    public ArrayList<String> maChenXuMaps = new ArrayList<>(List.of("areas_qiyucun"));
+
+    /**
+     * Areas that will spawn big-map roles (for example Swast). Use | to split maps
+     */
+
+    public ArrayList<String> swastMaps = new ArrayList<>(
+            List.of("areas1", "areas3", "areas4", "areas7", "areas10", "areas_qiyucun", "areas17",
+                    "areas_konggang"));
+
+    /**
+     * Areas that will spawn underwater roles (Sea King, Diver, Water Ghost)
+     */
+    public ArrayList<String> underwaterRolesMaps = new ArrayList<>(List.of("areas14"));
+
+    /**
+     * Areas that will spawn Konggang roles (Pilot, Shadow Falcon)
+     */
+    public ArrayList<String> airRolesMaps = new ArrayList<>(List.of("areas_konggang"));
+
+    /**
+     * Areas that will spawn trap-map roles (Adventurer)
+     */
+    public ArrayList<String> trapRolesMaps = new ArrayList<>(List.of("areas_shamo"));
+
+    /**
+     * Areas that will spawn snow-map roles
+     */
+    public ArrayList<String> snowRolesMaps = new ArrayList<>(List.of("areas_snow"));
+
+    /**
+     * Areas that will spawn desert-map roles
+     */
+    public ArrayList<String> desertRolesMaps = new ArrayList<>(List.of("desertmap"));
+
+    /**
+     * Areas that will spawn prison roles (Convict, Jailer). These roles ONLY spawn on these maps.
+     * An empty list means no map restriction (they may spawn on any map).
+     */
+    public ArrayList<String> prisonRolesMaps = new ArrayList<>(List.of("areas_prison"));
+
+    /**
+     * Areas that will spawn the witch-prison roles (Pre Witch). These roles ONLY spawn on these maps.
+     * Kept separate from prisonRolesMaps so the witch prison can use a different map than the
+     * jailer / convict prison. Defaults to the same map as prisonRolesMaps; change it to the
+     * witch-prison map id to decouple the two. An empty list means no map restriction.
+     */
+    public ArrayList<String> witchPrisonRolesMaps = new ArrayList<>(List.of("areas_prison"));
+
+    /**
+     * Role - The chance of egg roles
+     */
+    @ConfigEntry.Category(value = "detail")
+    @ConfigEntry.Gui.Excluded
+    public RoleSpawnInfoEntries roleDetails = RoleSpawnInfoEntries.createDefaultRoleInfo();
+    @ConfigEntry.Category(value = "detail")
+    @ConfigEntry.Gui.Excluded
+    public RoleSpawnInfoEntries modifierDetails = RoleSpawnInfoEntries.createDefaultModifierInfo();
+
+    @ConfigEntry.Category(value = "detail")
+    public int chanceOfTouhouRoles = 40;
+    @ConfigEntry.Category(value = "detail")
+    public int minPlayerForTouhouRoles = 12;
+    @ConfigEntry.Category(value = "detail")
+    public int chanceOfEggRoles = 15;
+    @ConfigEntry.Category(value = "detail")
+    public int minPlayerForEggRoles = 12;
+
+    /**
+     * 智力障碍患者（与监护人成对刷新）刷新概率（%）
+     */
+    @ConfigEntry.Category(value = "detail")
+    public int chanceOfZhizhang = 40;
+
+    /**
+     * 智力障碍患者（与监护人成对刷新）刷新最小玩家数
+     */
+    @ConfigEntry.Category(value = "detail")
+    public int minPlayerForZhizhang = 8;
+
+    // ==================== 角色刷新概率配置 ====================
+    // 普通概率配置（0-100，百分比）
+
+    /**
+     * 特殊警卫配置
+     */
+    /**
+     * 特殊警卫刷新最小玩家数
+     */
+    @ConfigEntry.Category(value = "detail")
+    public int minPlayerForSpecialPolice1 = 12;
+    @ConfigEntry.Category(value = "detail")
+    public int minPlayerForSpecialPolice2 = 18;
+    @ConfigEntry.Category(value = "detail")
+    public int minPlayerForSpecialPolice3 = 24;
+    @ConfigEntry.Category(value = "detail")
+    public int minPlayerForSpecialPolice4 = 30;
+    @ConfigEntry.Category(value = "detail")
+    public int minPlayerForSpecialPolice5 = 36;
+
+    /**
+     * Starting cooldown (in ticks)
+     */
+
+    public int generalCooldownTicks = GameConstants.getInTicks(0, 30);
+
+    /**
+     * 大侦探勘察尸体所需的静止时间（秒）
+     */
+    public int greatDetectiveChannelSeconds = 4;
+
+    /**
+     * 大侦探勘察完成后的冷却时间（秒）
+     */
+    public int greatDetectiveCooldownSeconds = 28;
+
+    /**
+     * Enable client blood render
+     */
+
+    public boolean enableClientBlood = true;
+
+    /**
+     * (Server Side) Enable the gun-fire tracer line effect broadcast on every gunshot
+     */
+
+    public boolean gunTracerEffect = true;
+
+    /**
+     * Punishment for a civilian's accidental killing of another civilian
+     */
+
+    public boolean accidentalKillPunishment = true;
+
+    /**
+     * Allow Natural deaths to trigger voodoo (deaths without an assigned killer)
+     */
+
+    public boolean voodooNonKillerDeaths = false;
+
+    /**
+     * Makes voodoos act like Evil players when shot by a revolver (no backfire, no
+     * gun lost)
+     */
+
+    public boolean voodooShotLikeEvil = true;
+
+    /**
+     * Whether Executioners can manually select their targets. If disabled, targets
+     * will be assigned randomly
+     */
+    @ConfigSync(shouldSync = true)
+    public boolean executionerCanSelectTarget = false;
+
+    /**
+     * Executioner - chance for the gun to disappear after killing the assigned target (%).
+     * A value of 5 means the gun is consumed on roughly one in twenty target kills.
+     */
+    @ConfigSync(shouldSync = true)
+    public int executionerGunDisappearChance = 5;
+
+    /**
+     * Morphling - Morph duration in seconds
+     */
+
+    public int morphlingMorphDuration = 35;
+    /**
+     * Morphling - Morph cooldown in seconds
+     */
+
+    public int morphlingMorphCooldown = 20;
+
+    // // /**
+    // *Recaller-
+    // Maximum recall
+    // distance in blocks*/
+
+    public int recallerMaxDistance = 50;
+
+    /**
+     * Recaller - Recall mark cooldown in seconds
+     */
+
+    public int recallerMarkCooldown = 10;
+
+    /**
+     * Recaller - Teleport cooldown in seconds
+     */
+
+    public int recallerTeleportCooldown = 30;
+
+    /**
+     * Nostalgist (怀旧者) - Interval in seconds between passive coin payouts while in the back world
+     */
+    public int nostalgistBackWorldIncomeInterval = 60;
+
+    /**
+     * Nostalgist (怀旧者) - Coins granted each passive payout while in the back world
+     */
+    public int nostalgistBackWorldIncomeAmount = 35;
+
+    /**
+     * Nostalgist (怀旧者) - Coins granted when leaving the back world (manual or forced collapse)
+     */
+    public int nostalgistCollapseReward = 100;
+
+    /**
+     * Nostalgist (怀旧者) - Wind-up time in ticks before manually leaving the back world (20 ticks = 1s, default 1.5s)
+     */
+    public int nostalgistCollapseWindupTicks = 30;
+
+    /**
+     * Jade General - Flying kick displacement distance in blocks
+     */
+    public int jadeGeneralDashBlocks = 5;
+
+    /**
+     * Jade General - Knockback distance applied to a kicked target in blocks
+     */
+    public int jadeGeneralKnockbackBlocks = 2;
+
+    /**
+     * Jade General - Stun seconds when the knocked-back target hits a wall
+     */
+    public int jadeGeneralStunCollideSeconds = 4;
+
+    /**
+     * Jade General - Stun seconds when the knocked-back target does not hit a wall
+     */
+    public int jadeGeneralStunSeconds = 2;
+
+    /**
+     * Ghost Eye / 杨间 (鬼眼·杨间) - Passive scan interval in seconds
+     */
+    public int ghostEyeScanInterval = 16;
+
+    /**
+     * Ghost Eye - Domain (诡域) skill cooldown in seconds
+     */
+    public int ghostEyeDomainCooldown = 70;
+
+    /**
+     * Ghost Eye - Domain duration in seconds
+     */
+    public int ghostEyeDomainDuration = 6;
+
+    /**
+     * Ghost Eye - Domain radius in blocks
+     */
+    public int ghostEyeDomainRadius = 12;
+
+    // ==================== 寻血猎犬 (bloodhound) ====================
+    /** 寻血猎犬 - 「众神之眼」红圈扫描最大半径（格） */
+    public int bloodhoundScanRadius = 45;
+    /** 寻血猎犬 - 红圈由内向外扩散到最大半径所需时间（tick，20=1秒） */
+    public int bloodhoundScanExpandTicks = 30;
+    /** 寻血猎犬 - 被扫描玩家被透视的持续时间（秒） */
+    public int bloodhoundScanRevealSeconds = 5;
+    /** 寻血猎犬 - 「众神之眼」技能冷却（秒） */
+    public int bloodhoundScanCooldownSeconds = 25;
+    /** 寻血猎犬 - 枪械射击后的冷却（秒） */
+    public int bloodhoundGunCooldownSeconds = 20;
+    /** 寻血猎犬 - 用枪击杀一名玩家获得的金币总额 */
+    public int bloodhoundGunKillReward = 150;
+    /** 寻血猎犬 - 开枪命中后不掉落枪械的概率（%）；80 表示 80% 保留枪、20% 掉枪 */
+    public int bloodhoundGunNoDropChance = 80;
+    /** 寻血猎犬 - 「狂野猎人」特殊疯魔持续时间（秒） */
+    public int bloodhoundFrenzyDurationSeconds = 30;
+    /** 寻血猎犬 - 「狂野猎人」疯魔期间巡警手枪冷却（tick，20=1秒；130=6.5秒） */
+    public int bloodhoundFrenzyPatrollerCooldownTicks = 130;
+
+    // ==================== 魔女共犯 (witch_accomplice) ====================
+    /** 魔女共犯 - 压力试剂领域半径（格） */
+    public double witchAccompliceDomainRadius = 10.0;
+    /** 魔女共犯 - 压力试剂领域持续时间（秒） */
+    public int witchAccompliceDomainSeconds = 30;
+    /** 魔女共犯 - 领域内普通玩家每 tick 扣除的心情值 */
+    public float witchAccompliceDrainPerTick = 0.0005f;
+    /** 魔女共犯 - 领域内预备魔女每 tick 扣除的心情值（更多） */
+    public float witchAccomplicePreWitchDrainPerTick = 0.0015f;
+    /** 魔女共犯 - 离开领域后每 tick 恢复的心情值（恢复被扣量的 50%） */
+    public float witchAccompliceRecoverPerTick = 0.001f;
+
+    // ==================== Diviner (占卜家) ====================
+    /** Diviner - Divination cooldown in seconds */
+    public int divinerCooldown = 60;
+    /** Diviner - Crystal ball targeting range in blocks */
+    public double divinerRange = 4.0;
+    /** Diviner - Crystal ball shop price (coins) */
+    public int divinerCrystalBallPrice = 300;
+
+    // ==================== Photographer (摄影师) 画框传送 ====================
+    /** Photographer - 每局最多购买画框次数 */
+    public int photographerFrameMaxBuy = 2;
+    /** Photographer - 穿越画框赋予的失明秒数 */
+    public int photographerFrameBlindSeconds = 3;
+    /** Photographer - 穿越画框后的冷却秒数 */
+    public int photographerFrameCooldownSeconds = 3;
+    /** Photographer - 触发穿越的画框碰撞箱外扩距离（方块） */
+    public double photographerFrameTriggerInflate = 0.25;
+    /** Photographer - 单个画框最多可传送玩家的次数（用尽后画框失效） */
+    public int photographerFrameMaxTeleports = 8;
+    /** Photographer - 画框传送的最大水平距离（方块，<=0 表示不限制） */
+    public double photographerFrameMaxDistance = 256.0;
+    /** Photographer - 画框传送的最大垂直(Y轴)距离（方块，<=0 表示不限制） */
+    public double photographerFrameMaxYDistance = 12.0;
+
+    // ==================== Delayer (滞时鬼) ====================
+    /** Delayer - Rewind skill: seconds between anchoring and the automatic rewind */
+    public int delayerRewindDelaySeconds = 8;
+    /** Delayer - Rewind skill cooldown in seconds */
+    public int delayerRewindCooldown = 120;
+    /** Delayer - Rewind skill coin cost */
+    public int delayerRewindCost = 75;
+    /** Delayer - Duration (seconds) of the daze/shader filter applied to everyone on rewind */
+    public int delayerDazeSeconds = 1;
+
+    // ==================== Wizard (巫师) ====================
+    /** Wizard - Max mana (魔素) capacity */
+    public int wizardMaxMana = 500;
+    public int wizardStartingMana = 120;
+    /** Wizard - Mana gained per coin of income (all coins convert to mana) */
+    public int wizardManaPerCoin = 1;
+    /** Wizard - Passive mana regen per second */
+    /** Wizard - Staff left-click knockback strength */
+    public double wizardStaffKnockback = 1.2;
+    /** Wizard - Fire arrow max range in blocks */
+    public double wizardFireArrowRange = 30.0;
+    /** Wizard - Max players a single fire arrow can pierce */
+    public int wizardFireArrowMaxPierce = 2;
+    /** Wizard - Fire arrow delayed death seconds after enough hits */
+    public int wizardFireArrowDeathDelaySeconds = 3;
+    /** Wizard - Fire arrow (staff projectile) cooldown in seconds between shots */
+    public double wizardFireArrowCooldownSeconds = 2.0;
+    /** Wizard - Armor spell minimum mana to cast */
+    public int wizardArmorMinMana = 200;
+    /** Wizard - Granted shield (armor) lifetime in seconds before it expires */
+    public int wizardShieldDurationSeconds = 120;
+    /** Wizard - Frost spell minimum mana to cast */
+    public int wizardFrostMinMana = 200;
+    /** Wizard - Frost spell freeze duration in seconds */
+    public int wizardFrostSeconds = 4;
+    /** Wizard - Frost spell cooldown in seconds */
+    public int wizardFrostCooldownSeconds = 90;
+    /** Wizard - Frost spell effect range in blocks */
+    public double wizardFrostRange = 8.0;
+    /** Wizard - Shadow spell mana cost */
+    public int wizardShadowCost = 150;
+    /** Wizard - Shadow spell blindness duration in seconds */
+    public int wizardShadowSeconds = 6;
+    /** Wizard - Shadow spell cooldown in seconds */
+    public int wizardShadowCooldownSeconds = 90;
+    /** Wizard - Explosion! spell minimum mana to cast */
+    public int wizardExplosionMinMana = 350;
+    /** Percent of current mana spent by Explosion! */
+    public int wizardExplosionManaPercentCost = 80;
+    /** Wizard - Explosion! spell cooldown in seconds */
+    public int wizardExplosionCooldownSeconds = 150;
+    /** Wizard - Nine-ring fireball max travel range in blocks */
+    public double wizardFireballRange = 25.0;
+    /** Wizard - Nine-ring fireball explosion radius in blocks */
+    public double wizardFireballRadius = 4.0;
+    /** Wizard - Max players killed by one nine-ring fireball */
+    public int wizardFireballMaxKills = 8;
+    /** Wizard - Mana gained from drinking a potion */
+    public int wizardPotionManaGain = 150;
+    /** Wizard - Potion attack-immunity window in seconds */
+    public int wizardPotionImmuneSeconds = 60;
+
+    // ==================== Undead Lord (亡灵之主) ====================
+    /** Undead Lord - Raise-from-corpse skill cooldown in seconds */
+    public int undeadLordReviveCooldownSeconds = 45;
+    /** Undead Lord - Max undead raised from corpses that can coexist (skill cap) */
+    public int undeadLordMaxActive = 3;
+    /** Undead Lord - Absolute hard cap of simultaneous undead (incl. conversions/charm) */
+    public int undeadLordHardCap = 8;
+    /** Undead Lord - Infection decay per second (percent) */
+    public double undeadLordInfectionDecayPerSecond = 2.0;
+    /** Undead Lord - Delay (seconds) between reaching 100% infection and death */
+    public int undeadLordInfectionDeathDelaySeconds = 3;
+    /** Undead Lord - Plague Fog duration in seconds */
+    public int undeadLordFogSeconds = 10;
+    /** Undead Lord - Plague Fog radius in blocks */
+    public double undeadLordFogRadius = 4.0;
+    /** Undead Lord - Plague Fog infection added per second to players inside */
+    public double undeadLordFogInfectPerSecond = 5.0;
+    /** Undead Lord - Soul Summon Charm temporary undead lifetime in seconds */
+    public int undeadLordCharmLifetimeSeconds = 45;
+    /** Undead Lord - Soul Summon Charm cooldown in seconds */
+    public int undeadLordCharmCooldownSeconds = 60;
+    /** Undead Lord - Infection Amplifier duration in seconds (undead infection doubled) */
+    public int undeadLordAmpSeconds = 60;
+    /** Undead Lord - Coins awarded each time infection is successfully injected (bone staff / undead attack); 0 disables */
+    public int undeadLordInfectionCoinReward = 100;
+    /** Undead Lord - Bone Staff durability (number of hits) */
+    public int undeadLordBoneStaffDurability = 5;
+    /** Undead Lord - Bone Staff recharge time in seconds after durability is depleted (refills to full, never breaks) */
+    public int undeadLordBoneStaffRechargeSeconds = 40;
+    /**
+     * Undead Lord - Bone Staff infection added per hit (0~100)
+     * <p>
+     * <b>已废弃，代码不再读取此值。</b>骨杖每次注入的感染值现已按上游 StarRailExpress 的设计
+     * 写死在代码中（{@code BoneStaffItem.BONE_STAFF_INFECTION_PER_HIT = 30}）。
+     * 保留该字段仅为兼容旧配置文件（删除后反序列化会报错），修改它不会影响游戏表现。
+     * </p>
+     */
+    @Deprecated
+    public double undeadLordBoneStaffInfection = 24.0;
+    /** Undead Lord - Bone Staff shop price */
+    public int undeadLordBoneStaffPrice = 130;
+    /** Undead Lord - Real damage each undead deals to a player per attack (HP, 0=disabled) */
+    public double undeadLordUndeadAttackDamage = 1.0;
+
+    // ==================== Huanling (幻灵) ====================
+    /** Huanling - 开局寻找附身目标的时间（秒），超时未附身则死亡 */
+    public int huanlingInitialSearchSeconds = 50;
+    /** Huanling - 宿主死亡后重新寻找附身目标的宽限时间（秒，冒险模式） */
+    public int huanlingRepossessGraceSeconds = 10;
+    /** Huanling - 主动脱离宿主后重新寻找附身目标的宽限时间（秒，旁观模式） */
+    public int huanlingDetachGraceSeconds = 8;
+    /** Huanling - 游戏开局多少秒后转换为附身目标的职业并现身 */
+    public int huanlingTransformGameSeconds = 180;
+
+    /** 格罗赛尔游记 (Groselle Travelog) - 放逐目标坐标 X */
+    public int grosellTravelogBanishX = -100;
+    /** 格罗赛尔游记 (Groselle Travelog) - 放逐目标坐标 Y */
+    public int grosellTravelogBanishY = 50;
+    /** 格罗赛尔游记 (Groselle Travelog) - 放逐目标坐标 Z */
+    public int grosellTravelogBanishZ = 21000;
+    /** 格罗赛尔游记 - 蓄力时间（秒），蓄满后才会放逐/召回目标 */
+    public double grosellTravelogChargeSeconds = 1.0;
+    /** 格罗赛尔游记 - 自动回归时间（秒），放逐后多久被放逐者自动回归 */
+    public int grosellTravelogAutoReturnSeconds = 60;
+    /** 格罗赛尔游记 - 冷却（秒），被放逐者释放后进入冷却 */
+    public int grosellTravelogCooldownSeconds = 75;
+    /** 格罗赛尔游记 - 瞄准放逐目标的最大距离（格） */
+    public double grosellTravelogRange = 6;
+
+    /** 船长 - 舱门调度消耗的局内金币数 */
+    public int conductorDoorWarpCost = 125;
+    /** 船长 - 舱门调度前摇（秒） */
+    public int conductorDoorWarpWindupSeconds = 5;
+    /** 船长 - 舱门调度冷却（秒） */
+    public int conductorDoorWarpCooldownSeconds = 90;
+
+    /** Leon (里昂) - Combat skill (kick) cooldown in seconds */
+    public int leonKickCooldown = 12;
+    /** Leon (里昂) - Combat skill (kick) knockback strength (larger = farther) */
+    public double leonKickKnockback = 1.5;
+    /** Leon (里昂) - Combat skill (kick) slowdown duration in seconds */
+    public double leonKickSlowSeconds = 2.5;
+    /** Leon (里昂) - Combat skill (kick) reach in blocks */
+    public double leonKickRange = 3.5;
+    /** Leon (里昂) - Alive player count threshold to grant the blue herb */
+    public int leonBlueHerbAtPlayers = 6;
+    /** Leon (里昂) - Alive player count threshold to grant the red herb */
+    public int leonRedHerbAtPlayers = 3;
+
+    /** 宿命的罪人 - 不同死因数量下限（&lt;=16 人时） */
+    public int doomedSinnerMinReasons = 4;
+    /** 宿命的罪人 - 不同死因数量上限（&gt;=32 人时） */
+    public int doomedSinnerMaxReasons = 6;
+    /** 宿命的罪人 - 同一死因死亡多少次后彻底死亡 */
+    public int doomedSinnerSamePermanentCount = 3;
+    /** 宿命的罪人 - 复活后留下的尸体多少秒后消失 */
+    public int doomedSinnerCorpseDespawnSeconds = 15;
+    /** 宿命的罪人 - 命运的启示技能的近距离接触范围（格） */
+    public double doomedSinnerRevealRange = 4.0;
+    /** 宿命的罪人 - 复活 / 重启后的短暂无敌时间（秒） */
+    public int doomedSinnerReviveInvincibleSeconds = 3;
+
+    /** Morphling (变形者) - Knife dummy skill cooldown in seconds */
+    public int morphlingDummyCooldown = 90;
+    /** Morphling (变形者) - Knife dummy max lifetime / forward-rush time in seconds */
+    public int morphlingDummyLifetime = 10;
+
+    // ==================== 躲藏专家 (duomaomao_meimeihide) ====================
+    /** 躲藏专家 - 变身躲藏技能金币花费（0 = 免费） */
+    public int duomaomaoMeimeiHideCost = 0;
+    /** 躲藏专家 - 变身持续时间（秒）：与咸鱼「晒太阳」一致 */
+    public int duomaomaoMeimeiHideDurationSeconds = 80;
+    /** 躲藏专家 - 变身躲藏技能冷却（秒）：与咸鱼「晒太阳」一致 */
+    public int duomaomaoMeimeiHideCooldownSeconds = 40;
+    /** 躲藏专家 - 准星选取方块的最大距离（格） */
+    public double duomaomaoMeimeiHideReach = 5.0;
+
+    /**
+     * Phantom - Invisibility duration in seconds
+     */
+
+    public int phantomInvisibilityDuration = 30;
+
+    /**
+     * Phantom - Invisibility cooldown in seconds
+     */
+
+    public int phantomInvisibilityCooldown = 90;
+
+    /**
+     * Voodoo - Voodoo ritual cooldown in seconds
+     */
+
+    public int voodooCooldown = 15;
+
+    /**
+     * Vulture - Eat body cooldown in seconds
+     */
+
+    public int vultureEatCooldown = 3;
+
+    /**
+     * Wuyage - Eat body cooldown in seconds
+     * 乌鸦 - 食用尸体技能冷却（秒）
+     */
+
+    public int wuyageEatCooldown = 90;
+
+    /**
+     * Swapper - Swap cooldown in seconds
+     */
+
+    public int swapperSwapCooldown = 60;
+
+    /** Swapper - G 键瞬移交换：与正前方目标交换位置的冷却（秒） */
+    public int swapperFrontSwapCooldown = 120;
+    /** Swapper - G 键瞬移交换：可作用的最大距离（格） */
+    public double swapperFrontSwapRange = 10.0;
+
+    // ==================== Noisemaker (大嗓门) 冲击波 ====================
+    /** 大嗓门 - 冲击波击退前方玩家的作用距离（格） */
+    public double noisemakerShockwaveRange = 8.0;
+    /** 大嗓门 - 冲击波水平击退强度 */
+    public double noisemakerShockwaveKnockback = 1.4;
+    /** 大嗓门 - 冲击波眩晕（定身）秒数 */
+    public int noisemakerStunSeconds = 2;
+
+    /**
+     * Manipulator - Control target cooldown in seconds
+     */
+
+    public int manipulatorCooldown = 600;
+
+    /**
+     * Manipulator - Max distance (blocks) allowed to start controlling a marked target
+     */
+    public int manipulatorMaxControlRange = 100;
+
+    /**
+     * Manipulator - Total control duration in seconds
+     */
+    public int manipulatorControlSeconds = 30;
+
+    /**
+     * Manipulator - Total cumulative staring seconds required to mark a target
+     */
+    public int manipulatorMarkSeconds = 20;
+
+    /**
+     * Manipulator - Max distance (blocks) to stare-mark a target
+     */
+    public int manipulatorMarkRange = 20;
+
+    /**
+     * Manipulator - Nausea duration (seconds) applied to the target on a successful mark
+     */
+    public int manipulatorMarkNauseaSeconds = 4;
+
+    /**
+     * Manipulator - Coins rewarded for a successful mark
+     */
+    public int manipulatorMarkReward = 15;
+
+    /**
+     * Manipulator - Coins rewarded when the controlled target dies during control
+     */
+    public int manipulatorTargetDeathReward = 75;
+
+    /**
+     * Skill Echo Event - global switch (default off)
+     */
+    public boolean skillEchoEventEnabled = false;
+
+    /**
+     * Skill Echo Event - random unannounced role broadcast switch
+     */
+    public boolean skillEchoRandomBroadcastEnabled = false;
+
+    /**
+     * Skill Echo Event - random broadcast interval in seconds
+     */
+    public int skillEchoRandomIntervalSeconds = 90;
+
+    /**
+     * Pelican - percentage of starting players needed to swallow for victory
+     */
+    public double pelicanEatPercentage = 70.0D;
+
+    /**
+     * 黑警刷新最小玩家数
+     */
+    //@ConfigEntry.Category(value = "detail")
+    //public int minPlayerForCorruptCop = 12;
+
+    /**
+     * 黑警刷新概率（%）
+     */
+    //@ConfigEntry.Category(value = "detail")
+   // public int chanceOfCorruptCop = 30;
+
+    /**
+     * 悍匪最小玩家数
+     */
+    public int minPlayerForGangsters = 12;
+
+    /**
+     * 悍匪刷新概率（%）
+     */
+    public int chanceOfGangsters = 75;
+
+    // ==================== Mafia 配置 ====================
+    public int godfatherStartingBullets = 1;
+    public int godfatherMaxLoadedBullets = 3;
+    public int mafiaRecruitRange = 16;
+
+    // ==================== Manager (经纪人) 配置 ====================
+    /**
+     * Manager - Cost in coins to sign a star/singer
+     */
+    public int managerSignCost = 200;
+
+    /**
+     * Manager - Coins awarded to both the manager and each signed singer
+     * when a signed star uses their skill
+     */
+    public int managerStarSkillReward = 25;
+
+    /**
+     * (Client Side) Welcome Voice - Play welcome voice
+     */
+
+    @Category("magic")
+    public String credit = "";
+    @Category("detail")
+    public int chanceOfTaskmaster = 30;
+    @Category("detail")
+    public int minPlayerForSecretive = 12;
+    @Category("detail")
+    public int chanceOfSecretive = 20;
+    @Category("detail")
+    public int minPlayerForLovers = 12;
+    @Category("detail")
+    public int chanceOfModifierLovers = 10;
+
+    // ==================== 木乃伊 (munaiyi_desert) 配置 ====================
+    /**
+     * 木乃伊 - 技能1「木乃伊的诅咒」冷却（秒）
+     */
+    public int munaiyiCurseCooldown = 10;
+
+    /**
+     * 木乃伊 - 技能2「恐吓」冷却（秒）
+     */
+    public int munaiyiScareCooldown = 25;
+
+    /**
+     * 木乃伊 - 技能3「现身」冷却（秒）
+     */
+    public int munaiyiRevealCooldown = 60;
+
+    /**
+     * 木乃伊 - 技能3「现身」持续时长（秒）
+     */
+    public int munaiyiRevealDuration = 15;
+
+    /**
+     * 木乃伊 - 技能4「领地确认」一局最多放置的棺材数量（通过技能充能实现）
+     */
+    public int munaiyiMaxCoffins = 3;
+
+    /**
+     * 木乃伊 - 技能5「干枯」冷却（秒）
+     */
+    public int munaiyiWitherCooldown = 20;
+
+    /**
+     * 木乃伊 - 技能5「干枯」作用半径（格）
+     */
+    public int munaiyiWitherRadius = 10;
+
+    /**
+     * 木乃伊 - 棺材标记玩家所需的周边停留总时长（秒）
+     */
+    public int munaiyiCoffinMarkSeconds = 10;
+
+    /**
+     * 木乃伊 - 棺材标记统计半径（格）
+     */
+    public double munaiyiCoffinMarkRadius = 7.5D;
+
+    /**
+     * 木乃伊 - 释放技能后的短暂现身时长（秒）
+     */
+    public int munaiyiBriefRevealSeconds = 3;
+
+    /**
+     * 铁傀儡 - 技能「铁拳冲击」射程（格）
+     */
+    public double imironmanSkillRange = 2.7D;
+
+    /**
+     * 铁傀儡 - 技能最大存储次数（充能上限）
+     */
+    public int imironmanMaxCharges = 3;
+
+    /**
+     * 铁傀儡 - 技能存储恢复冷却（秒），每恢复1次充能所需时间
+     */
+    public int imironmanRechargeSeconds = 30;
+
+    /**
+     * 铁傀儡 - 技能释放间隔冷却（秒）
+     */
+    public int imironmanCastIntervalSeconds = 6;
+
+    /**
+     * 铁傀儡 - 技能命中后目标的缓慢II+失明持续时长（秒）
+     */
+    public double imironmanSkillEffectSeconds = 2;
+
+    /**
+     * 铁傀儡 - 技能命中水平击退强度（约等于击退格数）
+     */
+    public double imironmanKnockback = 2.0D;
+
+    /**
+     * 铁傀儡 - 技能命中垂直击飞速度（约击飞4格高）
+     */
+    public double imironmanLaunchVelocity = 0.8D;
+
+    /**
+     * 铁傀儡 - 被动被球棒击打后的禁用/失明持续时长（秒）
+     */
+    public double imironmanPassiveDebuffSeconds = 5;
+
+    /**
+     * 扮演者 - 伪装阶段每完成一个任务获得的金币数（同普通平民）
+     */
+    public int banyanzheTaskReward = 50;
+
+    /**
+     * 扮演者 - 回忆方式二的判定半径（格）：范围内仅存在杀手阵营玩家时累计计时
+     */
+    public double banyanzheRecallRadius = 5.0D;
+
+    /**
+     * 扮演者 - 回忆方式二需要持续的时间（秒）
+     */
+    public int banyanzheRecallSeconds = 10;
+
+    /**
+     * 扮演者 - 小脑惩罚（误杀平民）时扣除的 san 值（0~1，不会死亡，改为掉枪+扣san）
+     */
+    public float banyanzheXiaoNaoSanLoss = 0.2f;
+
+    // ==================== 重刑犯 (convict) / 狱警 (jailer) 配置 ====================
+    /** 重刑犯 - 每完成一个任务获得的金币数 */
+    public int convictTaskReward = 50;
+    /** 重刑犯 - 被动收入每次发放的金币数 */
+    public int convictPassiveIncomeAmount = 5;
+    /** 重刑犯 - 被动收入发放间隔（秒） */
+    public int convictPassiveIncomeIntervalSeconds = 30;
+    /** 重刑犯 - 开局「做出你的抉择」GUI 的选择时限（秒），超时默认「毁灭一切」 */
+    public int convictChoiceSeconds = 30;
+
+    // ==================== Dream (Dream) ====================
+    /** Dream - 全员虚拟血量上限（Dream 系列武器攻击扣此血量，归零死亡） */
+    public int dreamMaxHealth = 20;
+    /** Dream - 是否启用「脱战自动回虚拟血量」；关闭后残血只能靠其它手段恢复 */
+    public boolean dreamHealthRegenEnabled = false;
+    /** Dream - 脱战多少秒后开始缓慢回血（仅在 {@link #dreamHealthRegenEnabled} 开启时生效） */
+    public int dreamHealthRegenDelaySeconds = 15;
+    /** Dream - 铁斧平A伤害 */
+    public int dreamAxeDamage = 9;
+    /** Dream - 铁斧跳劈伤害 */
+    public int dreamAxeCritDamage = 12;
+    /** Dream - 狂暴时铁斧平A伤害 */
+    public int dreamAxeBerserkDamage = 12;
+    /** Dream - 狂暴时铁斧跳劈伤害 */
+    public int dreamAxeBerserkCritDamage = 20;
+    /** Dream - 铁斧命中眩晕秒数（狂暴时见 dreamBerserkStunSeconds） */
+    public double dreamAxeStunSeconds = 1.0;
+    /** Dream - 狂暴时铁斧命中眩晕秒数 */
+    public double dreamBerserkStunSeconds = 2.0;
+    /** Dream - 巨幕面具冷却秒数（狂暴时长跟随疯魔 Psycho 计时器） */
+    public int dreamMaskCooldownSeconds = 120;
+    /** Dream - 狂暴时"看到 Dream"的最大判定距离（格），受障碍物遮挡影响 */
+    public double dreamFearSightDistance = 30.0;
+    /** Dream - "看到 Dream"的视线容错半径（格）：Dream 到玩家视线射线的垂距在此范围内即算看到 */
+    public double dreamFearSightRadius = 4.0;
+    /** Dream - 制酒技能冷却秒数 */
+    public int dreamBrewCooldownSeconds = 120;
+    /** Dream - 酒的隐身持续秒数（期间无法攻击、无法受伤） */
+    public int dreamWineDurationSeconds = 5;
+    /** Dream - 船强制乘坐半径（格） */
+    public double dreamBoatRadius = 3.0;
+    /** Dream - 船存在秒数 */
+    public int dreamBoatDurationSeconds = 10;
+    /** Dream - 船使用冷却秒数 */
+    public int dreamBoatCooldownSeconds = 60;
+    /** Dream - 铁斧价格 */
+    public int dreamAxePrice = 135;
+    /** Dream - 巨幕面具价格 */
+    public int dreamMaskPrice = 400;
+    /** Dream - 钻石镐价格 */
+    public int dreamPickaxePrice = 90;
+    /** Dream - 船价格 */
+    public int dreamBoatPrice = 100;
+
+    /**
+     * 地图列表匹配规则，与 {@link SpawnInfo#map} 的语义保持一致：
+     * 列表为空表示不限制地图；否则忽略首尾空白与大小写，与当前地图名逐一比对。
+     * 狱警 / 重刑犯 / 预备魔女这类"只在特定地图刷新"的职业都走这里，避免手写的名字
+     * 因为大小写或多余空格对不上，导致职业静默地一局都刷不出来。
+     */
+    public static boolean matchesMapList(List<String> mapList, String mapName) {
+        if (mapList == null || mapList.isEmpty()) {
+            return true;
+        }
+        if (mapName == null || mapName.isBlank()) {
+            return false;
+        }
+        String currentMap = mapName.trim();
+        for (String entry : mapList) {
+            if (entry != null && entry.trim().equalsIgnoreCase(currentMap)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    public static NoellesRolesConfig instance() {
+        return HANDLER.instance();
+    }
+}

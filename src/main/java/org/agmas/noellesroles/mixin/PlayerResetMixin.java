@@ -1,0 +1,264 @@
+package org.agmas.noellesroles.mixin;
+
+import io.wifi.starrailexpress.cca.SREAbilityPlayerComponent;
+import io.wifi.starrailexpress.game.GameUtils;
+import io.wifi.starrailexpress.util.SREItemUtils;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.item.ItemStack;
+import org.agmas.noellesroles.component.DeathPenaltyComponent;
+import org.agmas.noellesroles.component.ModComponents;
+import org.agmas.noellesroles.component.PlayerVolumeComponent;
+import org.agmas.noellesroles.component.TemporaryEffectPlayerComponent;
+import org.agmas.noellesroles.content.entity.CalamityMarkEntity;
+import org.agmas.noellesroles.content.entity.TripwireTrapEntity;
+import org.agmas.noellesroles.game.roles.innocence.athlete.AthletePlayerComponent;
+import org.agmas.noellesroles.game.roles.innocence.avenger.AvengerPlayerComponent;
+import org.agmas.noellesroles.game.roles.innocence.awesome_binglus.AwesomePlayerComponent;
+import org.agmas.noellesroles.game.roles.innocence.ayayaya.AyayayaPlayerComponent;
+import org.agmas.noellesroles.game.roles.innocence.boxer.BoxerPlayerComponent;
+import org.agmas.noellesroles.game.roles.innocence.broadcaster.BroadcasterPlayerComponent;
+import org.agmas.noellesroles.game.roles.innocence.cake_maker.CakeMakerComponent;
+import org.agmas.noellesroles.game.roles.innocence.detective.AgentPlayerComponent;
+import org.agmas.noellesroles.game.roles.innocence.fortuneteller.FortunetellerPlayerComponent;
+import org.agmas.noellesroles.game.roles.innocence.hoan_meirin.HoanMeirinPlayerComponent;
+import org.agmas.noellesroles.game.roles.innocence.recaller.RecallerPlayerComponent;
+import org.agmas.noellesroles.game.roles.innocence.voodoo.VoodooPlayerComponent;
+import org.agmas.noellesroles.game.roles.killer.blood_feudist.BloodFeudistPlayerComponent;
+import org.agmas.noellesroles.game.roles.killer.conspirator.ConspiratorPlayerComponent;
+import org.agmas.noellesroles.game.roles.killer.executioner.ExecutionerPlayerComponent;
+import org.agmas.noellesroles.game.roles.killer.insane_killer.InsaneKillerPlayerComponent;
+import org.agmas.noellesroles.game.roles.killer.manipulator.InControlCCA;
+import org.agmas.noellesroles.game.roles.killer.manipulator.ManipulatorPlayerComponent;
+import org.agmas.noellesroles.game.roles.killer.morphling.MorphlingPlayerComponent;
+import org.agmas.noellesroles.game.roles.killer.skincrawler.SkincrawlerPlayerComponent;
+import org.agmas.noellesroles.game.roles.killer.stalker.StalkerPlayerComponent;
+import org.agmas.noellesroles.game.roles.killer.trapper.TrapperPlayerComponent;
+import org.agmas.noellesroles.game.roles.neutral.admirer.AdmirerPlayerComponent;
+import org.agmas.noellesroles.game.roles.neutral.monokuma.MonokumaPlayerComponent;
+import org.agmas.noellesroles.game.roles.neutral.puppeteer.PuppeteerPlayerComponent;
+import org.agmas.noellesroles.game.roles.neutral.recorder.RecorderPlayerComponent;
+import org.agmas.noellesroles.game.roles.neutral.slippery_ghost.SlipperyGhostPlayerComponent;
+import org.agmas.noellesroles.game.roles.neutral.vulture.VulturePlayerComponent;
+import org.agmas.noellesroles.game.roles.neutral.wayfarer.WayfarerPlayerComponent;
+import org.agmas.noellesroles.packet.PlayerResetS2CPacket;
+import org.agmas.noellesroles.packet.SkincrawlerSkinS2CPacket;
+import org.agmas.noellesroles.utils.RoleUtils;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import pro.fazeclan.river.stupid_express.modifier.split_personality.cca.SkinSplitPersonalityComponent;
+import pro.fazeclan.river.stupid_express.modifier.split_personality.cca.SplitPersonalityComponent;
+
+import java.util.ArrayList;
+import java.util.List;
+
+/**
+ * 玩家重置 Mixin
+ * 
+ * 在游戏结束时（GameUtils.resetPlayer 被调用）清除所有自定义组件的状态
+ * 这确保了下一局游戏开始时玩家不会有残留的状态
+ */
+@Mixin(GameUtils.class)
+public abstract class PlayerResetMixin {
+
+    /**
+     * 在 resetPlayer 方法尾部注入，清除所有自定义组件状态
+     */
+    @Inject(method = "resetPlayer", at = @At("TAIL"))
+    private static void clearAllComponentsOnReset(ServerPlayer player, CallbackInfo ci) {
+        // 清除跟踪者组件状态
+
+        clearAllComponents(player);
+        if (ModComponents.DEFIBRILLATOR.get(player) != null) {
+            ModComponents.DEFIBRILLATOR.get(player).clear();
+        }
+        player.getInventory().offhand.set(0, ItemStack.EMPTY);
+        ServerPlayNetworking.send(player, new PlayerResetS2CPacket());
+        SREItemUtils.clearItem(player, (s) -> true);
+    }
+
+    /**
+     * 在 initializeGame 方法头部注入，清除自定义笔记
+     */
+    @Inject(method = "initializeGame", at = @At("HEAD"))
+    private static void clearAllComponentsOnReset(ServerLevel serverWorld, CallbackInfo ci) {
+        // 清除客户端自定义笔记状态
+
+        serverWorld.players().forEach((pl) -> {
+            // clearAllComponents(pl);
+            ServerPlayNetworking.send(pl, new PlayerResetS2CPacket());
+        });
+    }
+
+    private static void clearAllComponents(ServerPlayer player) {
+        RoleUtils.removeAllPlayerAttributes(player);
+        RoleUtils. removeAllEffects(player);
+        player.setLastHurtMob(null);
+        TemporaryEffectPlayerComponent.KEY.get(player).init();
+        BloodFeudistPlayerComponent.KEY.get(player).clear();
+        SplitPersonalityComponent.KEY.get(player).clear();
+        SkinSplitPersonalityComponent.KEY.get(player).clear();
+        SkinSplitPersonalityComponent.KEY.get(player).sync();
+        MonokumaPlayerComponent.KEY.get(player).clear();
+        // 清除坠木与皮革嘎的组件状态（防止猪建模/隐身效果残留到下一局）
+        org.agmas.noellesroles.game.roles.neutral.zhuimu.ZhuimuPlayerComponent.KEY.get(player).clear();
+        org.agmas.noellesroles.game.roles.neutral.pigegade.PigegadePlayerComponent.KEY.get(player).clear();
+        // 清除木乃伊组件状态（防止隐身效果/诅咒/棺材残留到下一局）
+        org.agmas.noellesroles.game.roles.neutral.munaiyi_desert.MunaiyiDesertPlayerComponent.KEY.get(player).clear();
+        (PlayerVolumeComponent.KEY.get(player)).clear();
+        (WayfarerPlayerComponent.KEY.get(player)).clear();
+        (HoanMeirinPlayerComponent.KEY.get(player)).clear();
+
+        ((MorphlingPlayerComponent) MorphlingPlayerComponent.KEY.get(player)).init();
+        ((VoodooPlayerComponent) VoodooPlayerComponent.KEY.get(player)).init();
+        (RecallerPlayerComponent.KEY.get(player)).init();
+        (VulturePlayerComponent.KEY.get(player)).init();
+        (ExecutionerPlayerComponent.KEY.get(player)).init();
+
+        FortunetellerPlayerComponent.KEY.get(player).init();
+
+        AwesomePlayerComponent awesomeComp = ModComponents.AWESOME.get(player);
+        awesomeComp.init();
+
+        StalkerPlayerComponent stalkerComp = ModComponents.STALKER.get(player);
+        stalkerComp.clearAll();
+        InControlCCA inControlCCA = InControlCCA.KEY.get(player);
+        inControlCCA.clear();
+        ModComponents.MAGICIAN.get(player).clear();
+        ManipulatorPlayerComponent manipulatorComp = ManipulatorPlayerComponent.KEY.get(player);
+        manipulatorComp.clear();
+        // 清除惩罚组件状态
+        DeathPenaltyComponent deathPenalty = ModComponents.DEATH_PENALTY.get(player);
+        deathPenalty.clear();
+
+        // 清除慕恋者组件状态
+        AdmirerPlayerComponent admirerComp = ModComponents.ADMIRER.get(player);
+        admirerComp.clear();
+
+        // 清除其他自定义组件状态
+        SREAbilityPlayerComponent abilityComp = ModComponents.ABILITY.get(player);
+        abilityComp.clear();
+
+        AvengerPlayerComponent avengerComp = ModComponents.AVENGER.get(player);
+        avengerComp.clear();
+
+        ConspiratorPlayerComponent conspiratorComp = ModComponents.CONSPIRATOR.get(player);
+        conspiratorComp.clear();
+
+        // Noellesroles.LOGGER.info("resetPlayer");
+        InsaneKillerPlayerComponent insaneKillerComp = ModComponents.INSANE_KILLER.get(player);
+        insaneKillerComp.clear();
+
+        SlipperyGhostPlayerComponent slipperyGhostComp = ModComponents.PRANKSTER.get(player);
+        slipperyGhostComp.clear();
+
+        BroadcasterPlayerComponent broadcasterComp = ModComponents.BROADCASTER.get(player);
+        broadcasterComp.clear();
+
+        AyayayaPlayerComponent postmanComp = ModComponents.AYAYAYA.get(player);
+        postmanComp.clear();
+
+        AgentPlayerComponent detectiveComp = ModComponents.AGENT.get(player);
+        detectiveComp.clear();
+
+        BoxerPlayerComponent boxerComp = ModComponents.FIGHTER.get(player);
+        boxerComp.clear();
+
+        AthletePlayerComponent athleteComp = ModComponents.ATHLETE.get(player);
+        athleteComp.clear();
+
+        // 清除设陷者组件状态
+        TrapperPlayerComponent trapperComp = ModComponents.TRAPPER.get(player);
+        trapperComp.clearAll();
+
+        // 清除窃皮者组件状态（重置抵挡次数等）并通知客户端还原皮肤
+        SkincrawlerPlayerComponent skincrawlerComp = ModComponents.SKINCRAWLER.get(player);
+        if (skincrawlerComp.stolenSkin != null) {
+            for (ServerPlayer sp : player.getServer().getPlayerList().getPlayers()) {
+                ServerPlayNetworking.send(sp, new SkincrawlerSkinS2CPacket(player.getUUID(), null));
+            }
+        }
+        skincrawlerComp.clear();
+
+        // 清除阿蒙组件状态并通知客户端还原伪装皮肤
+        ModComponents.AMON.get(player).clear();
+
+        // 清除傀儡师组件状态
+        PuppeteerPlayerComponent puppeteerComp = ModComponents.PUPPETEER.get(player);
+        puppeteerComp.clear();
+
+        // 清除记录员组件状态
+        RecorderPlayerComponent recorderComp = ModComponents.RECORDER.get(player);
+        recorderComp.clear();
+
+        // 清除蛋糕师组件状态（移除烟熏炉和已放置的蛋糕，防止残留到下一局）
+        CakeMakerComponent.KEY.get(player).clear();
+        // 删除modifier
+        // WorldModifierComponent worldModifierComponent =
+        // WorldModifierComponent.KEY.get(player.level());
+        // worldModifierComponent.modifiers.clear();
+        // worldModifierComponent.sync();
+        // 清除该玩家放置的所有灾厄印记实体
+        clearCalamityMarks(player);
+        // 清除该玩家放置的所有绊索陷阱实体
+        clearTripwireTraps(player);
+    }
+
+    /**
+     * 清除指定玩家放置的所有灾厄印记实体
+     */
+    private static void clearCalamityMarks(ServerPlayer player) {
+        ServerLevel world = player.serverLevel();
+        if (world == null)
+            return;
+
+        // 收集需要移除的实体（避免在遍历时修改集合）
+        List<Entity> toRemove = new ArrayList<>();
+
+        for (Entity entity : world.getAllEntities()) {
+            if (entity instanceof CalamityMarkEntity mark) {
+                // 检查是否是该玩家放置的
+                if (mark.getOwnerUuid().isPresent() &&
+                        mark.getOwnerUuid().get().equals(player.getUUID())) {
+                    toRemove.add(mark);
+                }
+            }
+        }
+
+        // 移除所有标记的实体
+        for (Entity entity : toRemove) {
+            entity.discard();
+        }
+    }
+
+    /**
+     * 清除指定玩家放置的所有绊索陷阱实体
+     */
+    private static void clearTripwireTraps(ServerPlayer player) {
+        ServerLevel world = player.serverLevel();
+        if (world == null)
+            return;
+
+        // 收集需要移除的实体（避免在遍历时修改集合）
+        List<Entity> toRemove = new ArrayList<>();
+
+        for (Entity entity : world.getAllEntities()) {
+            if (entity instanceof TripwireTrapEntity trap) {
+                // 检查是否是该玩家放置的
+                if (trap.getOwnerUuid().isPresent() &&
+                        trap.getOwnerUuid().get().equals(player.getUUID())) {
+                    toRemove.add(trap);
+                }
+            }
+        }
+
+        // 移除所有标记的实体
+        for (Entity entity : toRemove) {
+            entity.discard();
+        }
+    }
+}

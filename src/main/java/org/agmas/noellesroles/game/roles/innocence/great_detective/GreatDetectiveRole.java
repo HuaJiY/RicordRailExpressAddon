@@ -1,0 +1,380 @@
+package org.agmas.noellesroles.game.roles.innocence.great_detective;
+
+import io.wifi.starrailexpress.api.NormalRole;
+import io.wifi.starrailexpress.api.SRERole;
+import io.wifi.starrailexpress.api.data.RoleData;
+import io.wifi.starrailexpress.cca.AreasWorldComponent;
+import io.wifi.starrailexpress.cca.SREGameWorldComponent;
+import io.wifi.starrailexpress.cca.SREPlayerShopComponent;
+import io.wifi.starrailexpress.content.entity.PlayerBodyEntity;
+import io.wifi.starrailexpress.content.item.KnifeItem;
+import io.wifi.starrailexpress.content.item.api.SREItemProperties.HeldLikeBat;
+import io.wifi.starrailexpress.content.item.api.SREItemProperties.HeldLikeRevolver;
+import io.wifi.starrailexpress.game.GameUtils;
+import io.wifi.starrailexpress.game.forensic.ForensicCategory;
+import io.wifi.starrailexpress.index.TMMEntities;
+import io.wifi.starrailexpress.util.SRENetworkMessageUtils;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.RandomSource;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.AABB;
+import org.agmas.harpymodloader.component.WorldModifierComponent;
+import org.agmas.harpymodloader.modifiers.SREModifier;
+import org.agmas.noellesroles.content.entity.DoomedSinnerBodyEntity;
+import org.agmas.noellesroles.game.roles.innocence.great_detective.DetectiveClue.ClueType;
+import org.agmas.noellesroles.init.ModItems;
+import org.agmas.noellesroles.role_data.innocence.GreatDetectiveRoleData;
+import org.agmas.noellesroles.role_data.innocence.GreatDetectiveRoleData.DeathNote;
+
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+
+/**
+ * 大侦探（平民阵营）。
+ *
+ * <p>对着尸体右键开始短时勘察（需静止不动 4 秒）。完成后记下该死者的死亡时间，
+ * 并随机写入一条凶手碎片线索。推理之书按凶手分页；线索 ≥ 3 条时可在书上
+ * 选择查明「方位」或「生死」（每名凶手只能查明一项）。
+ * 对亡语杀手的伪装尸体在勘察开始时立刻揭穿。
+ */
+public class GreatDetectiveRole extends NormalRole {
+
+    public GreatDetectiveRole(ResourceLocation identifier, int color, boolean isInnocent, boolean canUseKiller,
+            MoodType moodType, int maxSprintTime, boolean hideScoreboard) {
+        super(identifier, color, isInnocent, canUseKiller, moodType, maxSprintTime, hideScoreboard);
+    }
+
+    @Override
+    public InteractionResult rightClickEntity(Player player, Entity victim) {
+        // 尸体是勘察目标：必须吞掉这一次右键实体交互。
+        // 否则原版在实体交互返回 PASS 之后会继续走物品的 use()，导致推理之书被顺带打开。
+        // 客户端同样要返回 SUCCESS（不需要 RoleData），否则本地就会弹出笔记界面。
+        if (!isInvestigatableBody(victim)) {
+            return InteractionResult.PASS;
+        }
+        if (!(player instanceof ServerPlayer serverPlayer)) {
+            return InteractionResult.SUCCESS;
+        }
+        GreatDetectiveRoleData comp = RoleData.getNullable(GreatDetectiveRoleData.class, serverPlayer);
+        if (comp == null) {
+            return InteractionResult.SUCCESS;
+        }
+        return comp.tryStartChannel(serverPlayer, victim);
+    }
+
+    /** 是否是大侦探可以勘察的尸体（亡语杀手的伪装尸体不算）。 */
+    public static boolean isInvestigatableBody(Entity victim) {
+        return victim instanceof PlayerBodyEntity && !DoomedSinnerBodyEntity.isDoomedSinnerBody(victim);
+    }
+
+    /** 引导完成后结算勘察结果：记下死亡时间并随机写入一条线索。 */
+    public static void finishInvestigation(ServerPlayer serverPlayer, GreatDetectiveRoleData comp,
+            PlayerBodyEntity body) {
+        Level level = serverPlayer.level();
+        SREGameWorldComponent gameWorld = SREGameWorldComponent.KEY.get(level);
+        if (gameWorld == null || !gameWorld.isRunning()) {
+            return;
+        }
+
+        UUID corpseUuid = body.getUUID();
+        comp.markCorpseUsed(corpseUuid);
+        comp.enterCooldown();
+
+        Component deadName = resolveDeadName(serverPlayer, body);
+        int deathSeconds = Math.max(0, body.tickCount / 20);
+        Component formattedTime = DetectiveFlavor.formatTime(deathSeconds);
+        UUID salt = corpseUuid;
+
+        UUID killerUuid = body.getKillerUuid();
+        if (killerUuid == null) {
+            comp.sync();
+            broadcast(serverPlayer,
+                    DetectiveFlavor.noKiller(salt, deadName, formattedTime).withStyle(ChatFormatting.GRAY));
+            return;
+        }
+
+        int beforeCount = comp.clueCount(killerUuid);
+        comp.addDeathNote(killerUuid, new DeathNote(deadName.getString(), deathSeconds));
+
+        List<DetectiveClue> candidates = buildCandidates(serverPlayer, gameWorld, killerUuid, body);
+        candidates.removeIf(c -> comp.hasClue(killerUuid, c));
+        if (candidates.isEmpty()) {
+            ensureBook(serverPlayer);
+            comp.sync();
+            broadcast(serverPlayer,
+                    DetectiveFlavor.noNewClue(salt, deadName, formattedTime).withStyle(ChatFormatting.GRAY));
+            return;
+        }
+
+        DetectiveClue chosen = candidates.get(level.getRandom().nextInt(candidates.size()));
+        comp.addClue(killerUuid, chosen);
+        ensureBook(serverPlayer);
+        comp.playCompleteFx(serverPlayer);
+        comp.sync();
+
+        MutableComponent result = DetectiveFlavor.deathTime(salt, deadName, formattedTime)
+                .withStyle(ChatFormatting.DARK_GRAY)
+                .append(Component.literal("\n"))
+                .append(DetectiveFlavor.clueLine(chosen).withStyle(ChatFormatting.GOLD));
+        int afterCount = comp.clueCount(killerUuid);
+        if (beforeCount < 3 && afterCount >= 3 && !comp.hasTargetReveal(killerUuid)) {
+            result.append(Component.literal("\n"))
+                    .append(DetectiveFlavor.enoughClues(killerUuid).withStyle(ChatFormatting.AQUA));
+        }
+        broadcast(serverPlayer, result);
+    }
+
+    private static void broadcast(ServerPlayer player, Component message) {
+        SRENetworkMessageUtils.sendBroadcast(player, message);
+    }
+
+    /** 根据尸体与凶手当前状态，构建本次可获得的候选线索。 */
+    private static List<DetectiveClue> buildCandidates(ServerPlayer detective, SREGameWorldComponent gameWorld,
+            UUID killerUuid, PlayerBodyEntity body) {
+        List<DetectiveClue> list = new ArrayList<>();
+        Level level = detective.level();
+
+        // 凶器大类（来自尸体死因，本就同步）
+        ForensicCategory cat = ForensicCategory.fromDeathReason(ResourceLocation.tryParse(body.getDeathReason()));
+        if (cat != ForensicCategory.UNKNOWN) {
+            list.add(new DetectiveClue(ClueType.WEAPON, cat.name()));
+        }
+
+        // 具体职业 + 阵营
+        SRERole role = gameWorld.getRole(killerUuid);
+        if (role != null) {
+            list.add(new DetectiveClue(ClueType.ROLE, role.identifier().toString()));
+            list.add(new DetectiveClue(ClueType.FACTION, factionOf(role)));
+        }
+
+        // 携带的修饰符
+        WorldModifierComponent wmc = WorldModifierComponent.KEY.get(level);
+        if (wmc != null) {
+            for (SREModifier mod : wmc.getModifiers(killerUuid)) {
+                if (mod != null) {
+                    list.add(new DetectiveClue(ClueType.MODIFIER, mod.identifier().toString()));
+                }
+            }
+        }
+
+        // 已留下的尸体数
+        if (level instanceof ServerLevel sl) {
+            int kills = 0;
+            for (PlayerBodyEntity other : sl.getEntities(TMMEntities.PLAYER_BODY, e -> true)) {
+                if (killerUuid.equals(other.getKillerUuid())) {
+                    kills++;
+                }
+            }
+            if (kills > 0) {
+                list.add(new DetectiveClue(ClueType.KILLS, String.valueOf(kills)));
+            }
+        }
+
+        // 需要在线的凶手实体才能取名字片段、所在房间、持物、金币等
+        Player killer = level.getPlayerByUUID(killerUuid);
+        if (killer != null) {
+            String fragment = pickNameFragment(killer.getName().getString(), level.getRandom());
+            if (fragment != null && !fragment.isEmpty()) {
+                list.add(new DetectiveClue(ClueType.NAME, fragment));
+            }
+            int room = computeRoom(killer);
+            if (room > 0) {
+                list.add(new DetectiveClue(ClueType.ROOM, String.valueOf(room)));
+            }
+            list.add(new DetectiveClue(ClueType.HELD, heldCategory(killer.getMainHandItem())));
+            list.add(new DetectiveClue(ClueType.GOLD, goldBand(killer)));
+            list.add(new DetectiveClue(ClueType.NEARBY, String.valueOf(nearbyCount(killer))));
+            String floor = floorOf(killer);
+            if (floor != null) {
+                list.add(new DetectiveClue(ClueType.FLOOR, floor));
+            }
+            list.add(new DetectiveClue(ClueType.GUN, hasGun(killer) ? "yes" : "no"));
+            list.add(new DetectiveClue(ClueType.RANGE, rangeBand(detective, killer)));
+        }
+
+        return list;
+    }
+
+    /** 阵营：civilian / neutral / killer。 */
+    private static String factionOf(SRERole role) {
+        if (role.isInnocent()) {
+            return "civilian";
+        }
+        if (role.isNeutrals()) {
+            return "neutral";
+        }
+        return "killer";
+    }
+
+    /** 主手持物大类：empty / blade / firearm / blunt / other。 */
+    private static String heldCategory(ItemStack stack) {
+        if (stack == null || stack.isEmpty()) {
+            return "empty";
+        }
+        if (stack.getItem() instanceof KnifeItem) {
+            return "blade";
+        }
+        if (stack.getItem() instanceof HeldLikeRevolver) {
+            return "firearm";
+        }
+        if (stack.getItem() instanceof HeldLikeBat) {
+            return "blunt";
+        }
+        return "other";
+    }
+
+    /** 金币档：empty / low / mid / high。 */
+    private static String goldBand(Player killer) {
+        SREPlayerShopComponent shop = SREPlayerShopComponent.KEY.get(killer);
+        int coins = shop == null ? 0 : shop.balance;
+        if (coins < 50) {
+            return "empty";
+        }
+        if (coins < 150) {
+            return "low";
+        }
+        if (coins < 300) {
+            return "mid";
+        }
+        return "high";
+    }
+
+    /** 周围 8 格内的其他存活玩家数量。 */
+    private static int nearbyCount(Player killer) {
+        AABB box = killer.getBoundingBox().inflate(8.0);
+        return killer.level().getEntitiesOfClass(Player.class, box,
+                p -> p != killer && GameUtils.isPlayerAliveAndSurvival(p)).size();
+    }
+
+    /** 相对楼层：upper / lower；高度不足以分层时返回 null。 */
+    private static String floorOf(Player killer) {
+        AreasWorldComponent areas = AreasWorldComponent.KEY.get(killer.level());
+        if (areas == null) {
+            return null;
+        }
+        AABB play = areas.getPlayArea();
+        if (play == null) {
+            return null;
+        }
+        double height = play.maxY - play.minY;
+        if (height < 4.0) {
+            return null;
+        }
+        double mid = (play.minY + play.maxY) / 2.0;
+        return killer.getY() >= mid ? "upper" : "lower";
+    }
+
+    /** 背包里是否有枪。 */
+    private static boolean hasGun(Player killer) {
+        for (var compartment : killer.getInventory().compartments) {
+            for (ItemStack stack : compartment) {
+                if (!stack.isEmpty() && stack.getItem() instanceof HeldLikeRevolver) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    /** 相对侦探的距离档：close / mid / far。 */
+    private static String rangeBand(Player detective, Player killer) {
+        double d = detective.distanceTo(killer);
+        if (d < 16.0) {
+            return "close";
+        }
+        if (d < 48.0) {
+            return "mid";
+        }
+        return "far";
+    }
+
+    /** 从名字中随机取一个 1 个字的片段。 */
+    private static String pickNameFragment(String name, RandomSource random) {
+        if (name == null) {
+            return null;
+        }
+        name = name.trim();
+        if (name.isEmpty()) {
+            return null;
+        }
+        if (name.length() <= 1) {
+            return name;
+        }
+        int len = 1;
+        int start = random.nextInt(name.length() - len + 1);
+        return name.substring(start, start + len);
+    }
+
+    /** 依据游玩区域沿长轴等分 roomCount 段，计算凶手所在的房间/车厢号（1 起）。 */
+    private static int computeRoom(Player killer) {
+        AreasWorldComponent areas = AreasWorldComponent.KEY.get(killer.level());
+        if (areas == null) {
+            return -1;
+        }
+        AABB play = areas.getPlayArea();
+        if (play == null) {
+            return -1;
+        }
+        int roomCount = Math.max(1, areas.getRoomCount());
+        double lenX = play.maxX - play.minX;
+        double lenZ = play.maxZ - play.minZ;
+        double pos;
+        double min;
+        double len;
+        if (lenX >= lenZ) {
+            pos = killer.getX();
+            min = play.minX;
+            len = lenX;
+        } else {
+            pos = killer.getZ();
+            min = play.minZ;
+            len = lenZ;
+        }
+        if (len <= 0) {
+            return 1;
+        }
+        double t = (pos - min) / len;
+        t = Math.max(0.0, Math.min(0.999999, t));
+        return (int) (t * roomCount) + 1;
+    }
+
+    /** 若身上没有推理之书则补发一本。 */
+    public static void ensureBook(ServerPlayer player) {
+        for (var compartment : player.getInventory().compartments) {
+            for (ItemStack stack : compartment) {
+                if (stack.is(ModItems.DEDUCTION_BOOK)) {
+                    return;
+                }
+            }
+        }
+        ItemStack book = new ItemStack(ModItems.DEDUCTION_BOOK);
+        if (!player.getInventory().add(book)) {
+            player.drop(book, false);
+        }
+    }
+
+    /** 解析死者的显示名：优先在线玩家名，其次尸体自定义名，最后「未知者」。 */
+    private static Component resolveDeadName(ServerPlayer sp, PlayerBodyEntity body) {
+        UUID id = body.getPlayerUuid();
+        if (id != null && sp.getServer() != null) {
+            ServerPlayer dead = sp.getServer().getPlayerList().getPlayer(id);
+            if (dead != null) {
+                return dead.getName();
+            }
+        }
+        if (body.getCustomName() != null) {
+            return body.getCustomName();
+        }
+        return Component.translatable("message.noellesroles.great_detective.unknown");
+    }
+}

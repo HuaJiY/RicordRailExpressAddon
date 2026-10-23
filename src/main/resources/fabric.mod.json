@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "id": "ricord_rail_express",
+  "version": "${version}",
+  "name": "Ricord Rail Express",
+  "description": "Star Rail Express 的本地内容附属模组。",
+  "authors": ["HuaJiY"],
+  "license": "GPL-3.0-only",
+  "environment": "*",
+  "entrypoints": {
+    "main": ["io.HuaJiYa.ricordrailexpress.RicordRailExpressAddon"],
+    "client": ["org.agmas.noellesroles.client.NoellesrolesClient", "org.agmas.noellesroles.client.RicesRoleRhapsodyClient"],
+    "cardinal-components": ["org.agmas.noellesroles.component.ModComponents", "org.agmas.noellesroles.cca.NRComponents"],
+    "voicechat": [
+      "org.agmas.noellesroles.voice.NoellesrolesVoiceChatPlugin",
+      "org.agmas.noellesroles.voice.HeliumBuzzVoicechatPlugin",
+      "org.agmas.noellesroles.voice.VoiceEffectsOpenALPlugin"
+    ]
+  },
+  "mixins": ["noellesroles.mixins.json"],
+  "depends": {
+    "fabricloader": ">=0.19.3",
+    "minecraft": "1.21.1",
+    "fabric-api": "*",
+    "starrailexpress": ">=4.4.0",
+    "cloth-config": "*",
+    "architectury": "*",
+    "sre_resource": "*"
+  },
+  "recommends": {
+    "voicechat": "*",
+    "cardinal-components": "*"
+  }
+}

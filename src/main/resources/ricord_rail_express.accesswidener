@@ -1,0 +1,96 @@
+accessWidener v2 named
+accessible class net/minecraft/world/item/ItemCooldowns$CooldownInstance
+accessible field net/minecraft/world/item/ItemCooldowns$CooldownInstance startTime I
+accessible field net/minecraft/world/item/ItemCooldowns$CooldownInstance endTime I
+accessible method net/minecraft/world/item/ItemCooldowns$CooldownInstance <init> (II)V
+accessible method net/minecraft/world/item/ItemCooldowns onCooldownStarted (Lnet/minecraft/world/item/Item;I)V
+accessible method net/minecraft/world/item/ItemCooldowns onCooldownEnded (Lnet/minecraft/world/item/Item;)V
+accessible field net/minecraft/world/item/ItemCooldowns tickCount I
+accessible field net/minecraft/world/item/ItemCooldowns cooldowns Ljava/util/Map;
+accessible method net/minecraft/world/inventory/AbstractContainerMenu doClick (IILnet/minecraft/world/inventory/ClickType;Lnet/minecraft/world/entity/player/Player;)V
+
+accessible field net/minecraft/world/item/ItemCooldowns cooldowns Ljava/util/Map;
+accessible method net/minecraft/world/entity/decoration/ArmorStand setSmall (Z)V
+accessible class net/minecraft/client/renderer/FogRenderer$FogData
+accessible class net/minecraft/client/resources/SkinManager$CacheKey
+accessible method net/minecraft/world/level/block/RedStoneOreBlock spawnParticles (Lnet/minecraft/world/level/Level;Lnet/minecraft/core/BlockPos;)V
+accessible class net/minecraft/client/renderer/texture/SimpleTexture$TextureImage
+accessible field net/minecraft/world/entity/player/Inventory compartments Ljava/util/List;
+accessible field net/minecraft/client/gui/GuiGraphics sprites Lnet/minecraft/client/gui/GuiSpriteManager;
+accessible field net/minecraft/client/gui/screens/LevelLoadingScreen progressListener Lnet/minecraft/server/level/progress/StoringChunkProgressListener;
+accessible method net/minecraft/client/gui/GuiGraphics innerBlit (Lnet/minecraft/resources/ResourceLocation;IIIIIFFFFFFFF)V
+accessible class net/minecraft/world/item/ItemCooldowns$CooldownInstance
+accessible field net/minecraft/world/item/ItemCooldowns$CooldownInstance endTime I
+accessible field net/minecraft/world/item/ItemCooldowns tickCount I
+accessible method net/minecraft/client/Camera setRotation (FF)V
+accessible field net/minecraft/client/gui/screens/ReceivingLevelScreen reason Lnet/minecraft/client/gui/screens/ReceivingLevelScreen$Reason;
+accessible field net/minecraft/client/gui/screens/ReceivingLevelScreen levelReceived Ljava/util/function/BooleanSupplier;
+accessible method net/minecraft/client/Camera setPosition (Lnet/minecraft/world/phys/Vec3;)V
+accessible field net/minecraft/client/gui/screens/LoadingOverlay minecraft Lnet/minecraft/client/Minecraft;
+accessible field net/minecraft/client/gui/screens/LoadingOverlay reload Lnet/minecraft/server/packs/resources/ReloadInstance;
+accessible field net/minecraft/client/gui/screens/LoadingOverlay onFinish Ljava/util/function/Consumer;
+accessible field net/minecraft/client/gui/screens/LoadingOverlay fadeIn Z
+
+accessible method net/minecraft/client/multiplayer/ClientLevel getEntities ()Lnet/minecraft/world/level/entity/LevelEntityGetter;
+accessible class net/minecraft/client/resources/SkinManager$TextureCache
+
+
+accessible field net/minecraft/world/entity/WalkAnimationState    speedOld    F
+accessible field net/minecraft/world/entity/WalkAnimationState    speed       F
+accessible field net/minecraft/world/entity/WalkAnimationState    position    F
+
+accessible method net/minecraft/client/gui/screens/Screen addRenderableWidget (Lnet/minecraft/client/gui/components/events/GuiEventListener;)Lnet/minecraft/client/gui/components/events/GuiEventListener;
+accessible method net/minecraft/client/gui/screens/Screen addRenderableOnly (Lnet/minecraft/client/gui/components/Renderable;)Lnet/minecraft/client/gui/components/Renderable;
+accessible method net/minecraft/client/gui/screens/Screen addWidget (Lnet/minecraft/client/gui/components/events/GuiEventListener;)Lnet/minecraft/client/gui/components/events/GuiEventListener;
+accessible method net/minecraft/client/gui/screens/Screen removeWidget (Lnet/minecraft/client/gui/components/events/GuiEventListener;)V
+accessible method net/minecraft/client/gui/screens/Screen clearWidgets ()V
+
+accessible method net/minecraft/client/player/AbstractClientPlayer getPlayerInfo ()Lnet/minecraft/client/multiplayer/PlayerInfo;
+
+accessible field net/minecraft/world/level/block/entity/SkullBlockEntity mainThreadExecutor Ljava/util/concurrent/Executor;
+accessible field net/minecraft/world/level/block/entity/SkullBlockEntity profileCacheByName Lcom/google/common/cache/LoadingCache;
+accessible field net/minecraft/world/level/block/entity/SkullBlockEntity profileCacheById Lcom/google/common/cache/LoadingCache;
+
+accessible method net/minecraft/world/level/block/entity/SkullBlockEntity fetchProfileByName (Ljava/lang/String;Lnet/minecraft/server/Services;)Ljava/util/concurrent/CompletableFuture;
+
+accessible method net/minecraft/world/level/block/entity/SkullBlockEntity fetchProfileById (Ljava/util/UUID;Lnet/minecraft/server/Services;Ljava/util/function/BooleanSupplier;)Ljava/util/concurrent/CompletableFuture;
+
+# ========== PauseScreen 私有字段 ==========
+accessible field net/minecraft/client/gui/screens/PauseScreen DRAFT_REPORT_SPRITE Lnet/minecraft/resources/ResourceLocation;
+accessible field net/minecraft/client/gui/screens/PauseScreen COLUMNS I
+accessible field net/minecraft/client/gui/screens/PauseScreen MENU_PADDING_TOP I
+accessible field net/minecraft/client/gui/screens/PauseScreen BUTTON_PADDING I
+accessible field net/minecraft/client/gui/screens/PauseScreen BUTTON_WIDTH_FULL I
+accessible field net/minecraft/client/gui/screens/PauseScreen BUTTON_WIDTH_HALF I
+accessible field net/minecraft/client/gui/screens/PauseScreen RETURN_TO_GAME Lnet/minecraft/network/chat/Component;
+accessible field net/minecraft/client/gui/screens/PauseScreen ADVANCEMENTS Lnet/minecraft/network/chat/Component;
+accessible field net/minecraft/client/gui/screens/PauseScreen STATS Lnet/minecraft/network/chat/Component;
+accessible field net/minecraft/client/gui/screens/PauseScreen SEND_FEEDBACK Lnet/minecraft/network/chat/Component;
+accessible field net/minecraft/client/gui/screens/PauseScreen REPORT_BUGS Lnet/minecraft/network/chat/Component;
+accessible field net/minecraft/client/gui/screens/PauseScreen FEEDBACK_SUBSCREEN Lnet/minecraft/network/chat/Component;
+accessible field net/minecraft/client/gui/screens/PauseScreen SERVER_LINKS Lnet/minecraft/network/chat/Component;
+accessible field net/minecraft/client/gui/screens/PauseScreen OPTIONS Lnet/minecraft/network/chat/Component;
+accessible field net/minecraft/client/gui/screens/PauseScreen SHARE_TO_LAN Lnet/minecraft/network/chat/Component;
+accessible field net/minecraft/client/gui/screens/PauseScreen PLAYER_REPORTING Lnet/minecraft/network/chat/Component;
+accessible field net/minecraft/client/gui/screens/PauseScreen RETURN_TO_MENU Lnet/minecraft/network/chat/Component;
+accessible field net/minecraft/client/gui/screens/PauseScreen SAVING_LEVEL Lnet/minecraft/network/chat/Component;
+accessible field net/minecraft/client/gui/screens/PauseScreen GAME Lnet/minecraft/network/chat/Component;
+accessible field net/minecraft/client/gui/screens/PauseScreen PAUSED Lnet/minecraft/network/chat/Component;
+accessible field net/minecraft/client/gui/screens/PauseScreen showPauseMenu Z
+accessible field net/minecraft/client/gui/screens/PauseScreen disconnectButton Lnet/minecraft/client/gui/components/Button;
+
+# ========== PauseScreen 私有方法 ==========
+accessible method net/minecraft/client/gui/screens/PauseScreen createPauseMenu ()V
+accessible method net/minecraft/client/gui/screens/PauseScreen onDisconnect ()V
+accessible method net/minecraft/client/gui/screens/PauseScreen openScreenButton (Lnet/minecraft/network/chat/Component;Ljava/util/function/Supplier;)Lnet/minecraft/client/gui/components/Button;
+accessible method net/minecraft/client/gui/screens/PauseScreen openLinkButton (Lnet/minecraft/client/gui/screens/Screen;Lnet/minecraft/network/chat/Component;Ljava/net/URI;)Lnet/minecraft/client/gui/components/Button;
+
+accessible field net/minecraft/client/gui/Gui overlayMessageString Lnet/minecraft/network/chat/Component;
+accessible field net/minecraft/client/gui/Gui overlayMessageTime I
+accessible field net/minecraft/client/gui/Gui animateOverlayMessageColor Z
+accessible method net/minecraft/client/gui/Gui getCameraPlayer ()Lnet/minecraft/world/entity/player/Player;
+
+# ========== Cat Interaction ==========
+accessible field net/minecraft/world/entity/Entity yRotO F
+accessible field net/minecraft/world/entity/Entity xRotO F
+accessible field net/minecraft/world/entity/LivingEntity yHeadRotO F

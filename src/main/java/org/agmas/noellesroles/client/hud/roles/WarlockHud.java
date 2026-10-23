@@ -1,0 +1,60 @@
+package org.agmas.noellesroles.client.hud.roles;
+
+import io.wifi.starrailexpress.client.SREClient;
+import net.minecraft.ChatFormatting;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.Font;
+import net.minecraft.network.chat.Component;
+import org.agmas.noellesroles.client.event.RoleHudRenderCallback;
+import org.agmas.noellesroles.game.roles.killer.warlock.WarlockPlayerComponent;
+import org.agmas.noellesroles.role.ModRoles;
+
+/**
+ * 咒术师状态 HUD：咒物数量 / 诅咒中目标数 / 领域剩余时间。
+ * 技能冷却由 {@code UnifiedSkillHud} 自动渲染，这里只补充资源信息（左下角）。
+ */
+public class WarlockHud {
+    public static void register() {
+        RoleHudRenderCallback.EVENT.register(ModRoles.WARLOCK_ID, (context, deltaTracker) -> {
+            Minecraft client = Minecraft.getInstance();
+            if (SREClient.isPlayerSpectator() || client.level == null)
+                return;
+            var comp = WarlockPlayerComponent.KEY.maybeGet(client.player).orElse(null);
+            if (comp == null)
+                return;
+            Font font = client.font;
+            int sy = client.getWindow().getGuiScaledHeight();
+
+            int y = sy - 46;
+            Component essenceText = Component
+                    .translatable("hud.noellesroles.warlock.essences", comp.essences.size())
+                    .withStyle(comp.essences.isEmpty() ? ChatFormatting.GRAY : ChatFormatting.LIGHT_PURPLE);
+            context.drawString(font, essenceText, 8, y, 0xFFFFFF);
+            y += 12;
+
+            // 当前处于诅咒中的存活目标数量（领域可拉入的候选）
+            int cursedCount = comp.getCursedCount();
+            if (cursedCount > 0) {
+                Component curseText = Component
+                        .translatable("hud.noellesroles.warlock.cursing", cursedCount)
+                        .withStyle(ChatFormatting.DARK_PURPLE);
+                context.drawString(font, curseText, 8, y, 0xFFFFFF);
+                y += 12;
+            }
+
+            if (comp.domainOpen && comp.domainRemaining > 0) {
+                int sec = (comp.domainRemaining + 19) / 20;
+                Component domainText = Component
+                        .translatable("hud.noellesroles.warlock.domain", sec)
+                        .withStyle(ChatFormatting.DARK_AQUA);
+                context.drawString(font, domainText, 8, y, 0xFFFFFF);
+            } else if (comp.domainCooldown > 0) {
+                int sec = (comp.domainCooldown + 19) / 20;
+                Component cdText = Component
+                        .translatable("hud.noellesroles.warlock.domain_cd", sec)
+                        .withStyle(ChatFormatting.GRAY);
+                context.drawString(font, cdText, 8, y, 0xFFFFFF);
+            }
+        });
+    }
+}

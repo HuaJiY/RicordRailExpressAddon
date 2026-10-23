@@ -1,0 +1,294 @@
+package org.agmas.noellesroles.game.modifier;
+
+import io.wifi.starrailexpress.api.SRERole;
+import io.wifi.starrailexpress.cca.SREGameWorldComponent;
+import net.minecraft.server.level.ServerPlayer;
+import org.agmas.harpymodloader.events.ModifierAssigned;
+import org.agmas.harpymodloader.events.ModifierRemoved;
+import org.agmas.harpymodloader.events.ResetPlayerEvent;
+import org.agmas.harpymodloader.modifiers.HMLModifiers;
+import org.agmas.harpymodloader.component.WorldModifierComponent;
+import org.agmas.harpymodloader.modifiers.SREModifier;
+import org.agmas.noellesroles.Noellesroles;
+import org.agmas.noellesroles.game.modifier.coward.CowardModifier;
+import org.agmas.noellesroles.game.modifier.cowardice.CowardiceModifier;
+import org.agmas.noellesroles.game.modifier.expedition.ExpeditionComponent;
+import org.agmas.noellesroles.game.modifier.hoarse.HoarseModifier;
+import org.agmas.noellesroles.game.modifier.introverted.IntrovertedModifier;
+import org.agmas.noellesroles.game.modifier.rage.RageModifier;
+import org.agmas.noellesroles.game.modifier.taxed.TaxedModifier;
+import org.agmas.noellesroles.role.ModRoles;
+import org.agmas.noellesroles.role.TraitorAndModifiers;
+
+import java.awt.*;
+import java.util.HashSet;
+import java.util.List;
+
+/**
+ * NoellesRoles 修饰符注册类
+ */
+public class NRModifiers {
+
+    /** 远征队修饰符 */
+    public static SREModifier EXPEDITION = HMLModifiers.registerModifier(new SREModifier(
+            Noellesroles.id("expedition"),
+            new Color(210, 180, 140).getRGB(), // 棕色 - 代表远征
+            null,
+            null,
+            false,
+            false))
+            .setDefaultEnableChance(5000);
+
+    /** 内向修饰符 */
+    public static SREModifier INTROVERTED = HMLModifiers.registerModifier(new SREModifier(
+            Noellesroles.id("introverted"),
+            0x9B7FD4, // 紫色
+            null,
+            null,
+            false,
+            false))
+            .setServerGameTickEvent((p) -> IntrovertedModifier.serverTick(p))
+            .setDefaultMax(2)
+            .setDefaultEnableChance(5000);
+
+    /** 纳税修饰符 */
+    public static SREModifier TAXED = HMLModifiers.registerModifier(new SREModifier(
+            Noellesroles.id("taxed"),
+            0xFC8E26, // 橙色
+            null,
+            null,
+            false,
+            false))
+            .setDefaultMax(1)
+            .setDefaultEnableChance(2000);
+
+    /** 饥渴修饰符：可从食物盘和饮料盘各拿取至多2份食物和2份饮料 */
+    public static SREModifier HUNGRY = HMLModifiers.registerModifier(new SREModifier(
+            Noellesroles.id("hungry"),
+            0xE05A47, // 红橙色 - 代表食欲
+            null,
+            null,
+            false,
+            false))
+            .setDefaultMax(2)
+            .setDefaultEnableChance(5000);
+
+    /** 沙哑修饰符：嗓音十分低沉 */
+    public static SREModifier HOARSE = HMLModifiers.registerModifier(new SREModifier(
+            Noellesroles.id("hoarse"),
+            0x8B7355, // 棕灰色 - 代表沙哑
+            null,
+            null,
+            false,
+            false))
+            .setServerGameTickEvent((p) -> HoarseModifier.serverTick(p))
+            .setDefaultMax(2)
+            .setDefaultEnableChance(5000);
+
+    /**
+     * 胆小鬼修饰符：仅平民可获得；持续获得胆小鬼药水。
+     *
+     * <p>可被心理学家技能治愈。上游「面前有人死亡时坐下发抖」的行为未移植。</p>
+     */
+    public static SREModifier COWARD = HMLModifiers.registerModifier(new SREModifier(
+            Noellesroles.id("coward"),
+            0x6B8E6B,
+            null,
+            null,
+            false,
+            false))
+            .setServerGameTickEvent(CowardModifier::serverTick)
+            .setDefaultMax(2)
+            .setDefaultEnableChance(4000);
+
+    /**
+     * 暴怒修饰符：持续获得暴怒药水。
+     *
+     * <p>可被心理学家技能治愈。上游「附近有人死亡时红屏加速」的行为未移植。</p>
+     */
+    public static SREModifier RAGE = HMLModifiers.registerModifier(new SREModifier(
+            Noellesroles.id("rage"),
+            0xC41E1E,
+            null,
+            null,
+            false,
+            false))
+            .setServerGameTickEvent(RageModifier::serverTick)
+            .setDefaultMax(2)
+            .setDefaultEnableChance(4000);
+
+    /**
+     * 怯懦修饰符：持续获得怯懦药水。
+     *
+     * <p>可被心理学家技能治愈。上游「附近有人死亡后失控跑走」的行为未移植。</p>
+     */
+    public static SREModifier COWARDICE = HMLModifiers.registerModifier(new SREModifier(
+            Noellesroles.id("cowardice"),
+            0x8A7A4A,
+            null,
+            null,
+            false,
+            false))
+            .setServerGameTickEvent(CowardiceModifier::serverTick)
+            .setDefaultMax(2)
+            .setDefaultEnableChance(4000);
+
+    /** Runtime marker used by the Fake Steve event for possessed bodies. */
+    public static SREModifier FAKE_STEVE_REPLACED = HMLModifiers.registerModifier(new SREModifier(
+            Noellesroles.id("fake_steve_replaced"),
+            0x303030,
+            null,
+            null,
+            false,
+            false))
+            .setCanSetSpawnInfoInConfig(false)
+            .setDefaultEnableChance(0)
+            .setDefaultMax(0);
+
+    /**
+     * 神的使命：仅钟表匠，30% 刷新；场上只剩一名平民时钟表匠转变为神父（神父不自然刷新）。
+     *
+     * <p>上游额外调用了 {@code setAddedVersion("4.4")}，本仓库 {@code SREModifier} 没有该 API，故省略。</p>
+     */
+    public static SREModifier GODS_MISSION = HMLModifiers.registerModifier(new SREModifier(
+            Noellesroles.id("gods_mission"),
+            0xF4E4A6,
+            null,
+            null,
+            false,
+            false))
+            .setHidden(true)
+            .setDefaultMax(1)
+            .setDefaultEnableChance(3000)
+            .setDefaultEnableNeededPlayerCount(12);
+
+    /**
+     * 初始化修饰符系统
+     */
+    public static void init() {
+        EXPEDITION.civilianOnly = true;
+        EXPEDITION.cannotBeAppliedTo = new HashSet<>(List.of(ModRoles.GHOST));
+        INTROVERTED.civilianOnly = true;
+        // 上游用 setCanOnlyBeAppliedToTeam(RoleTeam.CIVILIAN)，RKD 的 SREModifier 没有该 API，
+        // 改用公开字段 civilianOnly（与 EXPEDITION / INTROVERTED 的写法一致）。
+        COWARD.civilianOnly = true;
+        // 神的使命：只关联钟表匠：神父由转职产生，不能进关联扩展/名单刷新
+        GODS_MISSION.canOnlyBeAppliedTo = new HashSet<>(List.of(ModRoles.CLOCKMAKER));
+        GODS_MISSION.addBothRelatedRole(ModRoles.CLOCKMAKER);
+        ModRoles.PRIEST.addRelatedModifier(GODS_MISSION);
+        excludeLeonFromAllModifiers();
+        excludeChildFromScaleModifiers();
+        assignModifierComponents();
+        TaxedModifier.init();
+    }
+
+    /**
+     * 里昂不与远征队等任何修饰符共存于一人身上。
+     *
+     * <p>由于本模组（Noellesroles）入口先于其它模组（如 stupid_express）的修饰符注册执行，
+     * 此处在服务器启动时（所有模组修饰符均已注册到 {@link HMLModifiers#MODIFIERS}）统一把里昂
+     * 加入每个修饰符的 {@code cannotBeAppliedTo} 排除名单。
+     */
+    private static void excludeLeonFromAllModifiers() {
+        net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents.SERVER_STARTING.register(server -> {
+            for (SREModifier modifier : HMLModifiers.MODIFIERS) {
+                if (modifier.cannotBeAppliedTo == null) {
+                    modifier.cannotBeAppliedTo = new HashSet<>();
+                }
+                modifier.cannotBeAppliedTo.add(ModRoles.LEON);
+            }
+        });
+    }
+
+    private static void excludeChildFromScaleModifiers() {
+        net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents.SERVER_STARTING.register(server -> {
+            for (SREModifier modifier : HMLModifiers.MODIFIERS) {
+                if (modifier.equals(pro.fazeclan.river.stupid_express.constants.SEModifiers.TINY)
+                        || modifier.equals(pro.fazeclan.river.stupid_express.constants.SEModifiers.TALL)
+                        || modifier.equals(TraitorAndModifiers.DWARF)) {
+                    if (modifier.cannotBeAppliedTo == null) {
+                        modifier.cannotBeAppliedTo = new HashSet<>();
+                    }
+                    modifier.cannotBeAppliedTo.add(ModRoles.CHILD);
+                }
+            }
+        });
+    }
+
+    /**
+     * 分配修饰符组件
+     */
+    public static void assignModifierComponents() {
+        // 远征队修饰符分配事件
+        ModifierAssigned.EVENT.register((player, modifier) -> {
+            if (!modifier.equals(EXPEDITION)) {
+                return;
+            }
+            if (!(player instanceof ServerPlayer serverPlayer)) {
+                return;
+            }
+
+            var level = serverPlayer.serverLevel();
+            var gameWorld = SREGameWorldComponent.KEY.get(level);
+
+            // 检查玩家是否是好人阵营（包括平民和警长阵营）
+            // 并且不能是杀手阵营或中立阵营
+            SRERole role = gameWorld.getRole(player);
+            if (role != null && role.isInnocent() && !role.canUseKiller() && !role.isNeutrals()) {
+                // 只排除小透明
+                if (!gameWorld.isRole(player, ModRoles.GHOST)) {
+                    // 给玩家分配远征队组件
+                    var expeditionComponent = ExpeditionComponent.KEY.get(player);
+                    expeditionComponent.sync();
+
+                    Noellesroles.LOGGER.info("Expedition modifier assigned to player: " + player.getName().getString());
+                }
+            } else {
+                Noellesroles.LOGGER
+                        .info("Expedition modifier not assigned to killer/neutral: " + player.getName().getString());
+            }
+        });
+
+        // 远征队修饰符移除事件
+        ModifierRemoved.EVENT.register((player, modifier) -> {
+            if (modifier.equals(EXPEDITION)) {
+                var expeditionComponent = ExpeditionComponent.KEY.get(player);
+                if (expeditionComponent != null) {
+                    expeditionComponent.clear();
+                    expeditionComponent.sync();
+                }
+            }
+        });
+
+        // 玩家重置事件 - 清理远征队修饰符组件
+        ResetPlayerEvent.EVENT.register(player -> {
+            try {
+                var expeditionComponent = ExpeditionComponent.KEY.get(player);
+                if (expeditionComponent != null) {
+                    expeditionComponent.clear();
+                    expeditionComponent.sync();
+                }
+            } catch (Exception e) {
+                // 玩家可能没有 expedition 组件，忽略错误
+            }
+        });
+
+        // 胆小鬼不会获得内向修饰符，若被分配则直接去除
+        ModifierAssigned.EVENT.register((player, modifier) -> {
+            if (!modifier.equals(INTROVERTED)) {
+                return;
+            }
+            if (!(player instanceof ServerPlayer serverPlayer)) {
+                return;
+            }
+            var level = serverPlayer.serverLevel();
+            var gameWorld = SREGameWorldComponent.KEY.get(level);
+            if (gameWorld.isRole(player, ModRoles.COWARD)) {
+                var worldModifierComponent = WorldModifierComponent.KEY.get(level);
+                worldModifierComponent.removeModifier(player.getUUID(), INTROVERTED);
+                worldModifierComponent.sync();
+                Noellesroles.LOGGER.info("Removed INTROVERTED modifier from coward player: " + player.getName().getString());
+            }
+        });
+    }
+}

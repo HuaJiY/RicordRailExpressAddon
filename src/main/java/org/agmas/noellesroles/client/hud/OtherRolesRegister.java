@@ -1,0 +1,98 @@
+package org.agmas.noellesroles.client.hud;
+
+import io.wifi.starrailexpress.customrole.CustomRoleHud;
+import org.agmas.noellesroles.client.hud.modifiers.LoversHud;
+import org.agmas.noellesroles.client.hud.modifiers.RefugeeHud;
+import org.agmas.noellesroles.client.hud.modifiers.ShitSplitHud;
+import org.agmas.noellesroles.client.hud.roles.*;
+
+public class OtherRolesRegister {
+
+    public static void registerSons() {
+        CuckooHud.register();
+        ShitSplitHud.register();
+        VoteHud.register();
+        GreatDetectiveHud.register();
+        CustomPendingHud.register();
+        AdmirerHud.register();
+        AvengerHud.register();
+        BomberHud.register();
+        BoxerHud.register();
+        AgentHud.register();
+        DetectivePassiveHud.register();
+        DIOHud.register();
+        ExecutionerHud.register();
+        GamblerHud.register();
+        InsaneHud.register();
+        NecromancerHud.register();
+        MagicianHud.register();
+        MonitorHud.register();
+        MorphlingHud.register();
+        GhostEyeHud.register();
+        SilencerHud.register();
+        NostalgistHud.register();
+        NianShouHud.register();
+        PhantomHud.register();
+        PsychologistHud.register();
+        PuppeteerHud.register();
+        RecallerHud.register();
+        RecallKillerHud.register();
+        SeaKingHud.register();
+        SingerHud.register();
+        SuperStarHud.register();
+        TrapperHud.register();
+        VultureHud.register();
+        WaterGhostHud.register();
+        IntelligenceHud.register();
+        RefugeeHud.register();
+        LoversHud.register();
+        BroadcasterHud.register();
+        ImitatorHud.register();
+        FoolHud.register();
+        SuperLooseEndHud.register();
+        PartyKillerHud.register();
+        MeatballHud.register();
+        MorticianHud.register();
+        BuilderHud.register();
+        HousekeeperHud.register();
+        PelicanHud.register();
+        GodfatherHud.register();
+        BeeFamilyHud.register();
+        WarlockHud.register();
+        WizardHud.register();
+        RavenHud.register();
+        DoomedSinnerHud.register();
+        WraithAssassinHud.register();
+        org.agmas.noellesroles.client.hud.roles.AmonHud.register();
+        HuanlingHud.register();
+        AdventurerHud.register();
+        ReasonerHud.register();
+        EmbalmerHud.register();
+        SkincrawlerHud.register();
+        SwapperHud.register();
+        PhantomMusicianHud.register();
+        ZhizhangHud.register();
+        GuardianHud.register();
+        UndeadLordHud.register();
+        VeteranHud.register();
+        CakeMakerHud.register();
+        LeonHud.register();
+        BlackkeHud.register();
+        GhostofanyingHud.register();
+        TegongHud.register();
+        JinghuazheHud.register();
+        RuikeHud.register();
+        MengyanHud.register();
+        XundaozheHud.register();
+        SnowHunterHud.register();
+        ConvictHud.register();
+        KidnapperHud.register();
+        KidnappedHud.register();
+        // 船长·舱门调度 HUD（前摇倒计时 / 选门提示）
+        ConductorHud.register();
+        // 厨师：当前选择的盘子类型（食物盘 / 饮料盘）与切换键提示
+        ChefHud.register();
+        // 自定义职业HUD
+        CustomRoleHud.register();
+    }
+}

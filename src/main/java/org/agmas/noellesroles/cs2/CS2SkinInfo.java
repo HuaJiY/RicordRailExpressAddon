@@ -1,0 +1,312 @@
+package org.agmas.noellesroles.cs2;
+
+import java.util.HashMap;
+import java.util.Map;
+
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.level.block.Blocks;
+
+/**
+ * CS2 皮肤中文名称和介绍信息
+ * <p>
+ * 提供仓库和开箱界面使用的本地化皮肤名称与描述。
+ * </p>
+ */
+public final class CS2SkinInfo {
+
+    private CS2SkinInfo() {}
+
+    /** skinId → 中文名称 */
+    private static final Map<String, String> NAMES = new HashMap<>();
+    /** skinId → 中文介绍 */
+    private static final Map<String, String> DESCRIPTIONS = new HashMap<>();
+
+    static {
+        // ═══════════════════════════════════════════════════════════════════
+        // KNIFE（刀）
+        // ═══════════════════════════════════════════════════════════════════
+        register("knife/testofknifeskin", "测试刀皮", "用于测试的简易刀皮");
+        register("knife/knife_bunana", "香蕉刀", "刀身被包裹在黄色香蕉皮中，滑稽而致命");
+        register("knife/knife_tangdao", "唐刀", "东方古韵，锋芒毕露");
+        register("knife/knife_cheese", "芝士刀", "散发浓郁奶香的奇怪武器");
+        register("knife/knife_stonetool", "石器刀", "原始但可靠，回归最朴素的杀戮本能");
+        register("knife/knife_brokenbottle", "碎瓶刀", "用碎玻璃瓶打造的即兴武器");
+        register("knife/knife_ceremonial", "仪式刀", "精美的仪式用刀，刻有神秘符文");
+        register("knife/knife_goldcross", "金十字刀", "镶嵌金色十字架的华丽匕首");
+        register("knife/knife_hammer", "锤刀", "兼具锤子与刀刃的多功能武器");
+        register("knife/knife_bananaknife", "香蕉匕首", "弯曲如月的香蕉造型匕首");
+        register("knife/knife_yingfeng", "影锋", "暗影中的利刃，传说级收藏品");
+        register("knife/knife_beijixing", "北极星", "指引方向的星辰之刃，传说级收藏品");
+        register("knife/knife_bingjingliandao", "冰晶镰刀", "寒冰凝聚而成的死神之镰，挥舞时带起刺骨冷风");
+        register("knife/knife_dujinxiaodao", "镀金小刀", "表面镀金的小刀，低调中透露着奢华");
+        register("knife/knife_fenstemaikefeng", "粉色麦克风", "用麦克风当武器，每一击都是致命的高音");
+        register("knife/knife_meigongdao", "美工刀", "日常办公文具，此刻却成为致命凶器");
+        register("knife/knife_miyinxiaodao", "秘银小刀", "秘银锻造的轻盈小刀，削铁如泥");
+        register("knife/knife_mushao", "木勺", "厨房里的木勺，敲起人来意外地疼");
+        register("knife/knife_yaoshijian", "钥匙剑", "剑柄如钥匙般精巧，开启胜利之门的利刃");
+        register("knife/knife_yinren", "银刃", "纯银打造的利刃，在月光下闪耀着冷冽光芒");
+        register("knife/knife_yingren", "影刃", "藏于暗影中的传说之刃，出鞘必见血");
+        register("knife/knife_sushuikunai", "塑水苦无", "以流水塑形的苦无，切刀与击杀之时，唯有持者能听见它的潮鸣");
+        register("knife/knife_anxing", "暗星", "天使与恶魔交织的双生之刃，饮血之后光暗逆转");
+        register("knife/knife_emozhidao_1", "恶魔之刃", "漆黑气息凝聚的邪恶魔刃，挥动间似有低语");
+        register("knife/knife_bingzhui", "冰锥", "寒冰凝成的尖锐冰锥，触之刺骨生寒");
+        register("knife/knife_guaizhangtang", "糖果拐杖", "弯弯的拐杖糖，甜美外表下暗藏杀伤力");
+        register("knife/knife_lianhuadao", "莲花苦无", "莲纹点缀的苦无，于暗影中悄然绽放");
+        register("knife/knife_luosidao", "螺丝刀", "寻常五金工具，却能拧紧命运的螺丝");
+        register("knife/knife_gangbi", "钢笔", "文人雅士的随身利器，落笔即封喉");
+        register("knife/knife_xingguang", "星光", "凝聚星空曙光的传承之刃，暗金之躯中沉睡着偶尔苏醒的赤红之光");
+
+        // ═══════════════════════════════════════════════════════════════════
+        // REVOLVER（左轮）
+        // ═══════════════════════════════════════════════════════════════════
+        register("revolver/revolver_g7", "G7 战术", "轻量化战术左轮，可靠性极高");
+        register("revolver/revolver_m1911", "M1911 经典", "致敬经典手枪设计，永不过时");
+        register("revolver/revolver_crude", "粗制左轮", "做工粗糙但火力不减，性价比之选");
+        register("revolver/revolver_liberator", "解放者", "为自由而战的传奇武器");
+        register("revolver/revolver_longbarrel", "长管左轮", "加长枪管提供更远的射程和精准度");
+        register("revolver/revolver_banana", "香蕉左轮", "外表滑稽，但子弹可不会拐弯");
+        register("revolver/revolver_xiangzadi", "象鼻左轮", "独特象鼻造型的异域风格手枪");
+        register("revolver/revolver_shengxuan", "圣宣", "黑枪敬向逝者白枪指向生者");
+        register("revolver/revolver_dujinzuolun", "镀金左轮", "枪身镀金的左轮手枪，彰显非凡身份");
+        register("revolver/revolver_jisuqiang", "激素枪", "注射激素般令人亢奋的狂暴火力");
+        register("revolver/revolver_chuxingren", "处刑人", "处刑人的漆黑手枪，枪响即是宣判");
+        register("revolver/revolver_jianshouzhe", "坚守者之怒", "来自深暗之域的嘶吼");
+        register("revolver/revolver_weilai", "未来", "来自未来的高科技手枪，流光溢彩");
+        register("revolver/revolver_qidingqiang", "气钉枪", "以气钉推进的趣味手枪，滑射出膛");
+        register("revolver/revolver_tugaibandai", "涂改板带", "涂改带改造而成的创意枪械");
+        register("revolver/revolver_tangguofasheqi", "糖果发射器", "把糖果当子弹射出的甜蜜武器");
+
+        // ═══════════════════════════════════════════════════════════════════
+        // BAT（球棒）
+        // ═══════════════════════════════════════════════════════════════════
+        register("bat/baseball_bat_studded", "铆钉球棒", "镶嵌铆钉的暴力球棒");
+        register("bat/baseball_bat_dayiwan", "大一万", "价值不菲的定制球棒，身份的象征");
+        register("bat/baseball_bat_hanger", "衣架球棒", "用晾衣架改造的临时武器");
+        register("bat/baseball_bat_megammer", "巨锤球棒", "锤头加重的暴力版球棒");
+        register("bat/baseball_bat_wrench", "扳手球棒", "工业风十足的改造球棒");
+        register("bat/baseball_bat_badminton", "羽毛球拍", "伪装成运动器材的致命武器");
+        register("bat/baseball_bat_shovel", "铲子球棒", "铲型球棒，兼具挖掘与战斗");
+        register("bat/baseball_bat_longaxe", "长斧球棒", "斧型球棒，劈砍威力惊人");
+        register("bat/bat_dangxinxiaonao", "当心小脑", "敲人要当心，别伤了小脑");
+        register("bat/bat_dujinqiubang", "镀金球棒", "镀金球棒，挥棒间尽显贵气");
+        register("bat/bat_jita", "吉他", "用吉他奏响战斗的乐章");
+        register("bat/bat_kanglongjian", "亢龙锏", "传说中的亢龙锏，威力无穷");
+        register("bat/bat_pobanwangzheren", "破败王者之刃", "破败王者遗留的传说之刃，蕴含王者之力");
+        register("bat/bat_nitai", "拟态", "嗜血的拟态之刃，剑身上的邪眼正凝视着下一个猎物");
+        register("bat/bat_sushuiren", "塑水刃", "以流水塑形的利刃，挥动时水光潋滟，唯有持刃者能听见它的潮声");
+        register("bat/bat_juxingbangbangtang", "巨大棒棒糖", "比人还高的巨型棒棒糖，甜到爆头");
+        register("bat/bat_dianju", "电锯", "轰鸣作响的链锯，一路撕裂开路");
+        register("bat/bat_zuoyeben", "作业本", "厚重结实的作业本，拍人堪比板砖");
+
+        // ═══════════════════════════════════════════════════════════════════
+        // GRENADE（手雷）
+        // ═══════════════════════════════════════════════════════════════════
+        register("grenade/grenade_kanshenmekan", "看我丢雷", "名字虽怪但投掷精准");
+        register("grenade/grenade_zisefurui", "紫色弗雷", "散发紫色光芒的神秘手雷");
+        register("grenade/grenade_zhumei", "竹梅", "以竹梅为饰的雅致手雷");
+        register("grenade/grenade_toumatou", "偷猫头", "造型诡异的猫头手雷");
+        register("grenade/grenade_blueberry", "蓝莓手雷", "小巧的蓝莓造型手雷");
+        register("grenade/grenade_coconut", "椰子手雷", "热带风情，爆炸同样热情");
+        register("grenade/grenade_explosives", "烈性炸药", "高威力炸药，爆炸范围极大");
+        register("grenade/grenade_talisman", "符咒手雷", "刻有古老符咒的魔法手雷");
+        register("grenade/grenade_dujinshoulei", "镀金手雷", "镀金手雷，爆炸也要金光闪闪");
+        register("grenade/grenade_fennujiweiniao", "愤怒几维鸟", "愤怒的几维鸟，爆炸时发出尖啸");
+        register("grenade/grenade_heidong", "黑洞", "仿佛能吞噬一切的黑洞手雷");
+        register("grenade/grenade_zuzhouzhiyan", "诅咒之眼", "被诅咒的邪眼，注视着它的爆炸");
+        register("grenade/grenade_zhuzhu", "猪猪", "哼哼哼～圆滚滚的猪猪手雷，爆炸也要卖个萌");
+        register("grenade/grenade_yanxiao114514", "yanxiao114514", "带着微妙笑容的神秘猫咪，没人知道它下一秒会做什么");
+        register("grenade/grenade_hongwen", "红温", "已经红温了！这颗手雷的怒气即将爆发");
+        register("grenade/grenade_jingonglei", "进攻雷", "军用进攻型手雷，杀伤力惊人");
+        register("grenade/grenade_moshuiping", "墨水瓶", "爆开后墨水四溅，文人的愤怒");
+        register("grenade/grenade_huyaoweiyingtang", "糖果", "甜蜜诱人的糖果雷，爆炸也裹着糖霜");
+
+        // ═══════════════════════════════════════════════════════════════════
+        // BOW（弓）
+        // ═══════════════════════════════════════════════════════════════════
+        register("bow/bow_shenfa", "神罚", "宙斯之弓，如神明降下审判的雷霆");
+
+        // ═══════════════════════════════════════════════════════════════════
+        // HAT（帽子）— 瑞科德列车玩偶帽系列
+        // ═══════════════════════════════════════════════════════════════════
+        register("hat/hat_jiale114514", "JiaLe114514 玩偶帽", "把 JiaLe114514 玩偶戴在头上，全场最靓的崽");
+        // 瑞科德饰品（帽子/钢盔系列）
+        register("hat/hat_ricord_cat_headset", "小猫耳机", "瑞科德饰品：猫耳头戴式耳机，戴上后猫耳会立在头上");
+        register("hat/hat_ricord_chushimao", "厨师帽", "瑞科德饰品：雪白的厨师高帽，戴上就像星级大厨");
+        register("hat/hat_ricord_matongchou", "马桶抽", "瑞科德饰品：木柄皮搋子，戴在头上别有一番风味");
+        register("hat/hat_ricord_kuanggongmao", "矿工帽", "瑞科德饰品：带灯的矿工安全帽，照亮漆黑矿道");
+        register("hat/hat_ricord_limao", "礼帽", "瑞科德饰品：绅士黑色礼帽，举手投足皆是风度");
+        register("hat/hat_ricord_xiaodangao", "小蛋糕", "瑞科德饰品：头顶一块奶油小蛋糕，甜蜜又美味");
+        register("hat/hat_ricord_xiaoji", "小鸡", "瑞科德饰品：毛茸茸的小鸡趴在头顶，叽叽喳喳");
+        register("hat/hat_ricord_helmet", "钢盔", "瑞科德饰品：绿色迷彩钢盔，护耳与面罩一体");
+        register("hat/hat_ricord_helmet_t", "钢盔+T", "瑞科德饰品：绿色迷彩钢盔加装 T 形挂件");
+        register("hat/hat_ricord_shengdanmao", "圣诞帽", "瑞科德饰品：红色圣诞帽，帽尖顶着白色绒球");
+        register("hat/hat_ricord_caidao", "菜刀", "瑞科德饰品：一把大菜刀，戴在头上格外唬人");
+        register("hat/hat_ricord_jidan", "鸡蛋", "瑞科德饰品：白胖的鸡蛋扣在头上，蛋壳还会晃");
+        register("hat/hat_ricord_beleimao", "贝雷帽", "瑞科德饰品：复古贝雷帽，文艺气息拉满");
+        register("hat/hat_ricord_nainao", "奶闹", "瑞科德饰品：奶呼呼的小家伙趴在头顶");
+        register("hat/hat_ricord_xiaohonghua", "小红花", "瑞科德饰品：戴上一朵小红花，奖励你今天的表现");
+        register("hat/hat_ricord_xiaoji_taotao", "小鸡头套", "瑞科德饰品：整只小鸡头套，连脖子都裹进绒毛里");
+        register("hat/hat_ricord_xiaoqie_taotao", "小企鹅头套", "瑞科德饰品：圆滚滚的小企鹅头套，走路一摇一摆");
+        register("hat/hat_ricord_maidangdang", "麦当当员工帽", "瑞科德饰品：快餐店员工帽，欢迎光临麦当当");
+        // 第三期
+        register("hat/hat_ricord_t7", "T7 头盔", "瑞科德饰品：T7 战术头盔，视野开阔、防护到位");
+        register("hat/hat_ricord_xingjunmao", "行军帽", "瑞科德饰品：轻便的行军帽，适合长途跋涉");
+        register("hat/hat_ricord_tianshiguanghuan", "小天使光环", "瑞科德饰品：头顶一圈柔光，看起来格外无辜");
+        register("hat/hat_ricord_dajitui", "大鸡腿头套", "瑞科德饰品：整只大鸡腿套在头上，饿了还能咬一口");
+        register("hat/hat_ricord_wangguan", "王冠", "瑞科德饰品：金光闪闪的王冠，戴上就是全场焦点");
+        register("hat/hat_ricord_jiaohuang", "教皇冠冕", "瑞科德饰品：三层冠冕，庄重得让人不敢直视");
+        register("hat/hat_ricord_sharenkuang", "杀人狂面具", "瑞科德饰品：一张让人后背发凉的面具");
+        // 第四期
+        register("hat/hat_ricord_zangxixi", "脏兮兮的头巾", "瑞科德饰品：沾满灰尘的旧头巾，倒是很透气");
+        register("hat/hat_ricord_tianyuanmao", "田园帽", "瑞科德饰品：宽檐草帽，适合下地也适合晒太阳");
+        register("hat/hat_ricord_wushamao", "乌纱帽", "瑞科德饰品：官帽一戴，气场两米八");
+        register("hat/hat_ricord_wushimao", "巫师帽", "瑞科德饰品：尖顶巫师帽，念咒之前先扶稳");
+        register("hat/hat_ricord_shibingmao", "士兵帽", "瑞科德饰品：制式士兵帽，帽檐压得很低");
+        register("hat/hat_ricord_huangguan", "皇冠", "瑞科德饰品：镶嵌宝石的皇冠，比王冠更沉一些");
+        register("hat/hat_ricord_yuhuang", "玉皇大帝头冠", "瑞科德饰品：珠帘垂落的帝王头冠，戴上便是天庭之主");
+        // 特殊玩偶帽
+        registerHat("justacheese", "cheese");
+        registerHat("spbgcp", "spbgcp");
+        registerHat("huaji", "huaji");
+        registerHat("qingmei", "qingmei");
+        registerHat("jiale2", "jiale2");
+        registerHat("egg", "蛋黄派");
+        registerHat("tangye", "tangye");
+        registerHat("xgd", "xgd");
+        registerHat("ychennoc", "ychennoc");
+        registerHat("mongoose", "mongoose");
+        registerHat("xiaoxian", "xiaoxian");
+        registerHat("lifeline", "lifeline");
+        registerHat("rlingkong", "Rlingkong");
+        registerHat("x1aoba", "X1aoBa");
+        registerHat("caizi", "caizi");
+        registerHat("akasping", "AKASPING");
+        registerHat("chaorenqiang", "chaorenqiang");
+        registerHat("slhcat", "SLHCAT");
+        registerHat("cryingsnow", "cryingsnow");
+        registerHat("cutefish", "cutefish");
+        registerHat("xitomaotslx", "xItomaotslx");
+        registerHat("san_hua_awa", "三花awa");
+        registerHat("box", "box");
+        registerHat("white_koshi", "white koshi");
+        registerHat("qivvu_520", "Qivvu_520");
+        registerHat("shilu", "shilu");
+        registerHat("fetal_error", "fetal error");
+        registerHat("hengzai", "hengzai");
+        // 普通玩偶帽
+        registerHat("milk_dragon", "奶龙");
+        registerHat("baka", "蓝色冰妖精大笨蛋");
+        registerHat("furandoru", "淘气鬼");
+        registerHat("remilia", "威严满满的大小姐");
+        registerHat("mystia", "小脆骨");
+        registerHat("marisa", "借书总不还的魔法使");
+        registerHat("reimu", "爱钱的巫女");
+        registerHat("kaoruko", "小混沌");
+        registerHat("bamboo", "像乌龟的WIFI竹子");
+        registerHat("backvoice", "遗溯");
+        registerHat("biantwin", "希儿");
+        registerHat("canyuesama", "残月");
+        registerHat("dio", "迪奥");
+        registerHat("fushimi_koniro", "伏见绀");
+        registerHat("guanzheqwq", "观者");
+        registerHat("haiman233", "海曼");
+        registerHat("lengxiaocn", "冷笑");
+        registerHat("licraftlq", "璃清");
+        registerHat("luoyeruoshui", "落叶若水");
+        registerHat("mifan520", "米饭");
+        registerHat("none", "黑白");
+        registerHat("otith", "Otith");
+        registerHat("thef0rs4ken", "黑白熊");
+        registerHat("tomato", "久住");
+        registerHat("xiao_hei_hand", "小黑手");
+        registerHat("xiaozhanqwq", "老张");
+        registerHat("allintokyo", "allinTOKYO");
+        registerHat("aqiong", "阿琼");
+        registerHat("haozi", "皓子");
+        registerHat("liangjie", "凉介");
+        registerHat("liyu", "liyu");
+    }
+
+    /** 批量注册玩偶帽皮肤的中文名与介绍（skinId 格式：hat/hat_{base}） */
+    private static void registerHat(String base, String displayName) {
+        register("hat/hat_" + base, displayName + " 玩偶帽", "把" + displayName + "玩偶戴在头上");
+    }
+
+    private static void register(String skinId, String name, String description) {
+        NAMES.put(skinId, name);
+        DESCRIPTIONS.put(skinId, description);
+    }
+
+    /**
+     * 获取皮肤中文名称。如果没有注册则返回格式化后的英文ID。
+     */
+    public static String getName(String skinId) {
+        if (skinId == null) return "?";
+        String name = NAMES.get(skinId);
+        if (name != null) return name;
+        // 回退: 取皮肤名部分，下划线替换为空格
+        String fallback = skinId.contains("/") ? skinId.substring(skinId.lastIndexOf('/') + 1) : skinId;
+        return fallback.replace('_', ' ');
+    }
+
+    /**
+     * 获取皮肤中文介绍。如果没有注册则返回空字符串。
+     */
+    public static String getDescription(String skinId) {
+        if (skinId == null) return "";
+        return DESCRIPTIONS.getOrDefault(skinId, "");
+    }
+
+    /**
+     * 获取皮肤在仓库/开箱界面中的图标物品。
+     * <p>查找顺序：
+     * <ol>
+     * <li><b>瑞科德饰品</b>：皮肤 {@code hat/hat_ricord_xxx} 对应已注册的物品
+     * {@code noellesroles:ricord_xxx}，它自带 3D 物品模型 —— 直接用它，
+     * 这样界面显示的是帽子本身的模型，而不是皮革帽；</li>
+     * <li>玩偶帽：按皮肤名反查 {@code noellesroles:hat_xxx_plush} 玩偶方块物品；</li>
+     * <li>都没有则返回 null，由调用方决定回退（目前是皮革头盔）。</li>
+     * </ol>
+     */
+    public static ItemStack getIconStack(String skinId) {
+        if (skinId == null || !skinId.startsWith("hat/")) {
+            return null;
+        }
+        String skinName = skinId.substring("hat/".length());
+        String base = skinName.startsWith("hat_") ? skinName.substring("hat_".length()) : skinName;
+
+        // 1) 瑞科德饰品：皮肤名去掉 hat_ 前缀就是物品名（hat_ricord_limao -> ricord_limao）
+        //    这些物品已注册且各自有 3D 物品模型，用它当图标最准确。
+        Item ricordItem = BuiltInRegistries.ITEM
+                .get(ResourceLocation.fromNamespaceAndPath("noellesroles", base));
+        if (ricordItem != null && ricordItem != Items.AIR) {
+            return new ItemStack(ricordItem);
+        }
+
+        // 2) 玩偶帽
+        var block = BuiltInRegistries.BLOCK
+                .get(ResourceLocation.fromNamespaceAndPath("noellesroles", base + "_plush"));
+        if (block == null || block == Blocks.AIR) {
+            return null;
+        }
+        return new ItemStack(block.asItem());
+    }
+
+    /**
+     * 根据 itemType 获取中文类型名称
+     */
+    public static String getItemTypeName(String itemType) {
+        return switch (itemType) {
+            case "knife" -> "刀";
+            case "revolver", "gun" -> "左轮";
+            case "bat" -> "球棒";
+            case "grenade" -> "手雷";
+            case "hat" -> "帽子";
+            default -> itemType;
+        };
+    }
+}

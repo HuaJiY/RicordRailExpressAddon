@@ -1,0 +1,763 @@
+package org.agmas.noellesroles.init;
+
+import io.wifi.starrailexpress.api.TMMRoles;
+import io.wifi.starrailexpress.cca.SREGameWorldComponent;
+import io.wifi.starrailexpress.event.AllowPlayerDeathWithKiller;
+import io.wifi.starrailexpress.game.GameConstants;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Holder;
+import net.minecraft.core.Registry;
+import net.minecraft.core.particles.DustParticleOptions;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.util.Mth;
+import net.minecraft.world.effect.MobEffect;
+import net.minecraft.world.effect.MobEffectCategory;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.flag.FeatureFlagSet;
+import org.agmas.noellesroles.Noellesroles;
+import org.agmas.noellesroles.component.GhostStateComponent;
+import org.agmas.noellesroles.content.effects.NightmareEffect;
+import org.agmas.noellesroles.content.effects.NoCollideEffect;
+import org.agmas.noellesroles.content.effects.SimpleMobEffect;
+import org.agmas.noellesroles.content.effects.TimeStopEffect;
+import org.agmas.noellesroles.content.effects.VirtualHealthRestoreEffect;
+import org.agmas.noellesroles.game.roles.killer.nostalgist.NostalgistBackworldEffectSync;
+import org.agmas.noellesroles.game.roles.killer.wraith_assassin.WraithDimensionEffectSync;
+import org.agmas.noellesroles.role.ModRoles;
+
+public class ModEffects {
+    /** 仅禁止CCA/职业执行tick */
+    public static final Holder<MobEffect> CCA_FREEZED = register("cca_freezed",
+            new SimpleMobEffect(MobEffectCategory.NEUTRAL, 0xFFFFFF));
+    /** 禁止商店购买 */
+    public static final Holder<MobEffect> SHOP_BANNED = register("shop_banned",
+            new SimpleMobEffect(MobEffectCategory.NEUTRAL, 0xFFFFFF));
+    public static final Holder<MobEffect> SKILL_BANED = register("skill_baned",
+            new SimpleMobEffect(MobEffectCategory.HARMFUL, 0xFFFFFF));
+    /** 禁止技能使用与职业/CCA tick 执行 */
+    public static final Holder<MobEffect> SKILL_FREEZED = register("skill_freezed",
+            new SimpleMobEffect(MobEffectCategory.NEUTRAL, 0xFFFFFF));
+    public static final Holder<MobEffect> INVENTORY_BANED = register("inventory_baned",
+            new SimpleMobEffect(MobEffectCategory.HARMFUL, 0xFFFFFF));
+    public static final Holder<MobEffect> EAT_MEAT_FOOD = register("eat_meat_food",
+            new SimpleMobEffect(MobEffectCategory.HARMFUL, 0xFFFFFF));
+    public static final Holder<MobEffect> NEXT_SKILL_BANED = register("next_skill_baned",
+            new SimpleMobEffect(MobEffectCategory.HARMFUL, 0xFFFFFF));
+    public static final Holder<MobEffect> TAROT_ASSEMBLY = register("tarot_assembly",
+            new SimpleMobEffect(MobEffectCategory.NEUTRAL, 0xFFFFFF));
+    public static final Holder<MobEffect> BLACK_MONITOR = register("black_monitor",
+            new SimpleMobEffect(MobEffectCategory.HARMFUL, 0xFFFFFF));
+    public static final Holder<MobEffect> GHOST_STATE = register("ghost_state",
+            new SimpleMobEffect(MobEffectCategory.NEUTRAL, 0xFFFFFF) {
+                @Override
+                public boolean shouldApplyEffectTickThisTick(int i, int j) {
+                    return true;
+                }
+
+                @Override
+                public boolean applyEffectTick(LivingEntity livingEntity, int i) {
+
+                    if (livingEntity instanceof ServerPlayer serverPlayer) {
+                        GhostStateComponent ghostStateComponent = GhostStateComponent.KEY.get(serverPlayer);
+                        if (!ghostStateComponent.isGhostState()) {
+                            ghostStateComponent.isGhost = true;
+                            ghostStateComponent.sync();
+                        }
+                    }
+                    return super.applyEffectTick(livingEntity, i);
+                }
+            });
+    public static final Holder<MobEffect> MOVE_BANED = register("move_baned",
+            new SimpleMobEffect(MobEffectCategory.HARMFUL, 0xFFFFFF) {
+                @Override
+                public boolean applyEffectTick(LivingEntity livingEntity, int amplifier) {
+                    // 应该单独给而不是打包
+                    // if (livingEntity.level().getGameTime() % 20 == 0)
+                    //     livingEntity.addEffect(new MobEffectInstance(
+                    //             ModEffects.SAFE_TIME,
+                    //             40, // 持续时间 30s（tick）
+                    //             5, // 等级（0 = 速度 I）
+                    //             true, // ambient（环境效果，如信标）
+                    //             false, // showParticles（显示粒子）
+                    //             false // showIcon（显示图标）
+                    //     ));
+                    return super.applyEffectTick(livingEntity, amplifier);
+                }
+            });
+    public static final Holder<MobEffect> TURN_BANED = register("turn_baned",
+            new SimpleMobEffect(MobEffectCategory.HARMFUL, 0xFFFFFF));
+
+    /**
+     * 转向受限效果
+     * - 有害效果
+     * - 拥有此效果的玩家鼠标转向速度会被大幅降低
+     * - 客户端 Mixin 会在 turnPlayer 中临时降低灵敏度
+     */
+    public static final Holder<MobEffect> TURN_WEAK = register("turn_weak",
+            new SimpleMobEffect(MobEffectCategory.HARMFUL, 0xCC8800));
+    public static final Holder<MobEffect> USED_BANED = register("used_baned",
+            new SimpleMobEffect(MobEffectCategory.HARMFUL, 0xFFFFFF));
+    public static final Holder<MobEffect> ONLY_NO_COLLIDE = register("only_no_collide",
+            new SimpleMobEffect(MobEffectCategory.NEUTRAL, 0xFFFFFF));
+
+    /**
+     * 时间停止效果
+     * - 中性效果
+     * - 白色粒子
+     */
+    public static final Holder<MobEffect> TIME_STOP = register("time_stop", new TimeStopEffect());
+
+    /**
+     * 无碰撞效果
+     * - 中性效果
+     * - 绿色粒子
+     */
+    public static final Holder<MobEffect> NO_COLLIDE = register("no_collide", new NoCollideEffect());
+
+    /**
+     * 安全时间效果
+     * - 中性效果
+     * - 绿色粒子
+     */
+    public static final Holder<MobEffect> SAFE_TIME = register("safe_time", new NoCollideEffect());
+
+    /**
+     * 鬼缚效果（布袋鬼攻击诅咒）
+     * - 有害效果，深红色
+     * - 被攻击者：隐身 + 无法移动 + 无法使用物品 + 红色粒子
+     */
+
+    public static final Holder<MobEffect> GHOST_CURSE = register("ghost_curse",
+            new SimpleMobEffect(MobEffectCategory.HARMFUL, 0x8B0000) {
+                @Override
+                public boolean shouldApplyEffectTickThisTick(int i, int j) {
+                    return true;
+                }
+
+                @Override
+                public boolean isEnabled(FeatureFlagSet featureFlagSet) {
+                    return true;
+                }
+
+                @Override
+                public boolean applyEffectTick(LivingEntity livingEntity, int amplifier) {
+                    if (livingEntity.level() instanceof ServerLevel serverLevel) {
+                        BlockPos blockPos = livingEntity.blockPosition().above(1);
+                        serverLevel.sendParticles(DustParticleOptions.REDSTONE, (double) blockPos.getX(),
+                                (double) blockPos.getY(), (double) blockPos.getZ(), 14, (double) 0.6F, (double) 0.6F,
+                                (double) 0.6F, 0.4d);
+                    }
+                    if (livingEntity.level().getGameTime() % 20 == 0)
+                        livingEntity.addEffect(new MobEffectInstance(
+                                ModEffects.SAFE_TIME,
+                                40, // 持续时间 30s（tick）
+                                5, // 等级（0 = 速度 I）
+                                true, // ambient（环境效果，如信标）
+                                false, // showParticles（显示粒子）
+                                false // showIcon（显示图标）
+                        ));
+                    return super.applyEffectTick(livingEntity, amplifier);
+                }
+            });
+
+    /**
+     * 里世界侵蚀效果
+     * - 有害效果，暗紫色
+     * - 用于标记处于里世界影响下的好人玩家，驱动客户端shader和场景变化
+     */
+    public static final Holder<MobEffect> OTHERWORLD_AURA = register("otherworld_aura",
+            new SimpleMobEffect(MobEffectCategory.HARMFUL, 0x4B0082));
+
+    /**
+     * 怀旧者·里世界状态标记
+     * - 中性效果，灰白色
+     * - 由 {@code NostalgistPlayerComponent} 在里世界期间每 tick 维持，驱动客户端独立的灰白滤镜
+     *   shader（{@code TimeStopShader} 的 {@code nostalgist_gray} pass）并隐藏手持物品
+     *   （{@code InvisbleHandItem}）。禁止说话/使用物品则由 {@link #CHAT_BAN} / {@link #VOICE_SILENCE}
+     *   / {@link #USED_BANED} 一并施加。
+     */
+    public static final Holder<MobEffect> NOSTALGIST_BACKWORLD = register("nostalgist_backworld",
+            new SimpleMobEffect(MobEffectCategory.NEUTRAL, 0xBFBFBF));
+
+    /**
+     * 里世界·同界描边
+     * - 中性效果，青白色
+     * - 仅作为「客户端渲染标记」：当本地玩家自身也持有该效果时，才会给同样持有该效果的
+     *   其他玩家绘制发光轮廓（类似原版发光，但只有里世界内的人能互相看见）。
+     * - 由 {@code BackworldOutlineEffectSync} 同步给所有客户端（原版只会把效果同步给持有者本人）。
+     * - 使用方：怀旧者里世界、布袋鬼里世界。
+     */
+    public static final Holder<MobEffect> BACKWORLD_OUTLINE = register("backworld_outline",
+            new SimpleMobEffect(MobEffectCategory.NEUTRAL, 0x7FE7E0));
+
+    /**
+     * 寻血猎犬·狂野猎人疯魔标记
+     * - 中性效果，灰白色
+     * - 由 {@code BloodhoundPlayerComponent} 在疯魔期间施加于自身，
+     *   驱动客户端灰白滤镜（{@code TimeStopShader} 的 {@code nostalgist_gray} pass）。
+     */
+    public static final Holder<MobEffect> BLOODHOUND_FRENZY = register("bloodhound_frenzy",
+            new SimpleMobEffect(MobEffectCategory.NEUTRAL, 0xBFBFBF));
+
+    public static final Holder<MobEffect> WRAITH_DIMENSION = register("wraith_dimension",
+            new SimpleMobEffect(MobEffectCategory.NEUTRAL, 0x315B7C));
+
+    public static final Holder<MobEffect> WRAITH_MANIFEST = register("wraith_manifest",
+            new SimpleMobEffect(MobEffectCategory.NEUTRAL, 0x8FD6FF));
+
+    /**
+     * 脚步消失
+     * - 中性效果，灰色
+     * - 拥有者的脚步声不会被任何人听到、疾跑粒子不显示（行为见
+     *   {@code org.agmas.noellesroles.mixin.FootstepVanishMixin} 对 {@code playStepSound} /
+     *   {@code canSpawnSprintParticle} 的拦截）。由 {@code FootstepVanishEffectSync} 广播给所有客户端，
+     *   使其它玩家侧运行的拦截也能查到该效果，从而真正做到“别人听不到脚步”。
+     */
+    public static final Holder<MobEffect> FOOTSTEP_VANISH = register("footstep_vanish",
+            new SimpleMobEffect(MobEffectCategory.NEUTRAL, 0x9E9E9E));
+
+    /**
+     * 静默潜行（特工被动）
+     * - 中性效果，浅蓝色
+     * - 特工专属被动效果，游戏开始时永久施加。
+     *   拥有该效果的玩家脚步声被完全屏蔽（与 {@link #FOOTSTEP_VANISH} 共用
+     *   {@code FootstepVanishMixin} / {@code FootstepVanishServerMixin} 拦截逻辑），
+     *   由 {@code FootstepVanishEffectSync} 广播给所有客户端。
+     */
+    public static final Holder<MobEffect> JINGMOQIANXING = register("jingmoqianxing",
+            new SimpleMobEffect(MobEffectCategory.NEUTRAL, 0x87CEFA));
+
+    /**
+     * 静步（脚步声屏蔽）
+     * - 中性效果，深青色
+     * - 专门屏蔽脚步声的效果，与 {@link #JINGMOQIANXING}（移动粒子隐藏）配合使用。
+     *   拥有该效果的玩家：
+     *   <ul>
+     *     <li>服务端：{@code FootstepVanishServerMixin} 拦截 {@code ServerLevel.playSeededSound*}，
+     *         阻止该玩家产生的声音广播给其他客户端。</li>
+     *     <li>客户端：{@code FootstepVanishMixin} 拦截 {@code Entity.playStepSound}，
+     *         阻止本地脚步声播放。</li>
+     *   </ul>
+     *   由 {@code FootstepVanishEffectSync} 广播给所有客户端。
+     */
+    public static final Holder<MobEffect> JINGBU = register("jingbu",
+            new SimpleMobEffect(MobEffectCategory.NEUTRAL, 0x008B8B));
+
+    /**
+     * san值消耗减缓
+     * - 有益效果
+     * - 降低 mood 的自然消耗速度
+     */
+    public static final Holder<MobEffect> MOOD_DRAIN_REDUCTION = register("mood_drain_reduction",
+            new SimpleMobEffect(MobEffectCategory.BENEFICIAL, 0x63D5A5));
+
+    /**
+     * 无视心情消耗
+     * - 有益效果
+     * - mood 不再因任务自然下降
+     */
+    public static final Holder<MobEffect> MOOD_DRAIN_IMMUNITY = register("mood_drain_immunity",
+            new SimpleMobEffect(MobEffectCategory.BENEFICIAL, 0x2CC36B));
+
+    /**
+     * san值恢复
+     * - 有益效果
+     * - 持续缓慢恢复 mood
+     */
+    public static final Holder<MobEffect> MOOD_REGENERATION = register("mood_regeneration",
+            new SimpleMobEffect(MobEffectCategory.BENEFICIAL, 0x7AF2D2));
+    /**
+     * 无敌
+     */
+    public static final Holder<MobEffect> INVINCIBLE = register("invincible",
+            new SimpleMobEffect(MobEffectCategory.BENEFICIAL, 0x7AF2D2));
+
+    /**
+     * 无限体力
+     * - 有益效果
+     * - 冲刺不消耗体力
+     */
+    public static final Holder<MobEffect> INFINITE_STAMINA = register("infinite_stamina",
+            new SimpleMobEffect(MobEffectCategory.BENEFICIAL, 0xF6C95A));
+
+    /**
+     * 体力提升
+     * - 有益效果
+     * - 提升体力上限
+     */
+    public static final Holder<MobEffect> STAMINA_BOOST = register("stamina_boost",
+            new SimpleMobEffect(MobEffectCategory.BENEFICIAL, 0xE7A945));
+
+    /**
+     * 体力恢复效率提升
+     * - 有益效果
+     * - 增加非冲刺状态下体力回复速度
+     */
+    public static final Holder<MobEffect> STAMINA_RECOVERY = register("stamina_recovery",
+            new SimpleMobEffect(MobEffectCategory.BENEFICIAL, 0xFFD97D));
+
+    /**
+     * 低san视觉抗性
+     * - 有益效果
+     * - 降低低san下后处理视觉干扰（等级越高越强）
+     */
+    public static final Holder<MobEffect> LOW_SAN_SHADER_RESISTANCE = register("low_san_shader_resistance",
+            new SimpleMobEffect(MobEffectCategory.BENEFICIAL, 0xA9D6FF));
+
+    /**
+     * 黑白狂暴前奏效果
+     * - 有害效果
+     * - 全服减速20%+无法打开背包+水墨风shader
+     * - 持续60秒
+     */
+
+    /**
+     * 沉浸式滤镜效果：仙境
+     */
+    public static final Holder<MobEffect> FAIRYLAND_FILTER = register("fairyland_filter",
+            new SimpleMobEffect(MobEffectCategory.BENEFICIAL, 0xB7F7FF));
+
+    /**
+     * 沉浸式滤镜效果：后世
+     */
+    public static final Holder<MobEffect> AFTERLIFE_FILTER = register("afterlife_filter",
+            new SimpleMobEffect(MobEffectCategory.NEUTRAL, 0xD7D7D7));
+
+    /**
+     * 沉浸式滤镜效果：梦核
+     */
+    public static final Holder<MobEffect> DREAMCORE_FILTER = register("dreamcore_filter",
+            new SimpleMobEffect(MobEffectCategory.NEUTRAL, 0xFFC0F5));
+
+    /**
+     * 玩家隔离：看不见/听不见其他玩家
+     */
+    public static final Holder<MobEffect> PLAYER_ISOLATION = register("player_isolation",
+            new SimpleMobEffect(MobEffectCategory.HARMFUL, 0x6A5ACD));
+    /**
+     * 重金属语音：让 simple voice chat 的说话音色变低沉
+     */
+    public static final Holder<MobEffect> HEAVY_METAL_VOICE = register("heavy_metal_voice",
+            new SimpleMobEffect(MobEffectCategory.NEUTRAL, 0x505050));
+    /**
+     * 扩音语音：扩大语音传播范围
+     */
+    public static final Holder<MobEffect> VOICE_RANGE_BOOST = register("voice_range_boost",
+            new SimpleMobEffect(MobEffectCategory.BENEFICIAL, 0x8FD3FF));
+    /**
+     * 回响语音：让语音出现回音
+     */
+    public static final Holder<MobEffect> VOICE_ECHO = register("voice_echo",
+            new SimpleMobEffect(MobEffectCategory.NEUTRAL, 0xCBB6FF));
+    /**
+     * 沉默语音：让其他人听不到说话者的声音
+     */
+    public static final Holder<MobEffect> VOICE_SILENCE = register("voice_silence",
+            new SimpleMobEffect(MobEffectCategory.HARMFUL, 0x808080));
+    /**
+     * 聊天禁止：拥有此效果的玩家发送的聊天消息不会被任何人看到
+     */
+    public static final Holder<MobEffect> CHAT_BAN = register("chat_ban",
+            new SimpleMobEffect(MobEffectCategory.HARMFUL, 0x666666));
+
+    /**
+     * 黑白熊狂暴效果
+     */
+    public static final Holder<MobEffect> MONOKUMA_FRENZY = register("monokuma_frenzy",
+            new org.agmas.noellesroles.game.roles.neutral.monokuma.MonokumaFrenzyEffect());
+
+    /**
+     * 伪装效果
+     * - 中性效果
+     * - 持续期间客户端会把玩家皮肤替换为预留的伪装皮肤
+     *   （见 OnGettingPlayerSkin 监听器，皮肤资源位于
+     *   assets/starrailexpress/textures/entity/disguise/disguise_skin.png）
+     */
+    public static final Holder<MobEffect> DISGUISE = register("disguise",
+            new SimpleMobEffect(MobEffectCategory.NEUTRAL, 0x7B68EE));
+
+    /**
+     * 时间回溯恍惚：滞时鬼回溯时所有人短暂获得，触发客户端时空滤镜 shader。
+     */
+    public static final Holder<MobEffect> TIME_REWIND_DAZE = register("time_rewind_daze",
+            new SimpleMobEffect(MobEffectCategory.HARMFUL, 0x8A6BFF));
+
+    /**
+     * 诡域标记（鬼眼·杨间）。
+     * - 有害效果，幽蓝色
+     * - 标记处于诡域内的玩家；拥有此效果的玩家无法开启杀手透视
+     *   （客户端拦截见 {@code org.agmas.noellesroles.mixin.client.InstinctMixin}）。
+     */
+    public static final Holder<MobEffect> EERIE_DOMAIN = register("eerie_domain",
+            new SimpleMobEffect(MobEffectCategory.HARMFUL, 0x6A5ACD));
+
+    /** 抑制杀手本能透视 */
+    public static final Holder<MobEffect> NO_INSTINCT = register("no_instinct",
+            new SimpleMobEffect(MobEffectCategory.HARMFUL, 0x6A5ACD));
+
+    /**
+     * 入梦（Dream 体系）：拥有者在睡觉时恢复理智并获得迅捷，触发一次后清除。
+     * 等级越高，恢复的理智与给予的迅捷等级越高。
+     * 触发逻辑见 {@link org.agmas.noellesroles.content.effects.DreamEffectHandler}。
+     */
+    public static final Holder<MobEffect> ENTER_DREAM = register("enter_dream",
+            new SimpleMobEffect(MobEffectCategory.BENEFICIAL, 0x8E7CFF));
+
+    /**
+     * 颤抖（Dream 体系）。
+     * - 有害效果，暗红色
+     * - 拥有者因恐惧而双手发抖：客户端准星/视角会缓慢随机漂移。
+     * 漂移逻辑见
+     * {@code org.agmas.noellesroles.game.roles.killer.dream.client.DreamClientHandler}
+     * （客户端 tick，纯本地视角偏移，不发包）。
+     * Dream（Dream）狂暴时被"看到"的玩家会获得此效果。
+     */
+    public static final Holder<MobEffect> TREMBLE = register("tremble",
+            new SimpleMobEffect(MobEffectCategory.HARMFUL, 0x8B1A1A));
+
+    /**
+     * 虚拟血量恢复（Dream 虚拟血量体系）
+     * - 有益效果，粉红色
+     * - 拥有此效果的玩家每秒恢复 1 点虚拟血量（等级越高恢复越多），
+     *   行为见 {@link VirtualHealthRestoreEffect} 与
+     *   {@code org.agmas.noellesroles.game.roles.killer.dream.DreamHealthComponent#restore}。
+     *   移植自 SRE 的同名效果。
+     */
+    public static final Holder<MobEffect> VIRTUAL_HEALTH_RESTORE = register("virtual_health_restore",
+            new VirtualHealthRestoreEffect(MobEffectCategory.BENEFICIAL, 0xFF6B9D));
+
+    /**
+     * 视野迷雾
+     * - 有害效果，灰蓝色
+     * - 拥有者视野被浓雾笼罩；等级越高雾的距离越远（看得越远）。
+     *   1 级（amplifier 0）时雾仅 2 格。雾的渲染见
+     *   {@code org.agmas.noellesroles.mixin.client.VisionFogMixin}（注入 FogRenderer.setupFog）。
+     */
+    public static final Holder<MobEffect> VISION_FOG = register("vision_fog",
+            new SimpleMobEffect(MobEffectCategory.HARMFUL, 0x55667A));
+
+    /**
+     * 失明症（移植自"失明症"模组）
+     * - 有害效果，近黑色
+     * - 拥有者画面几乎全黑（雾效压黑，见 WorldRendererMixin/BackgroundRendererMixin 的失明雾分支），
+     *   需使用导盲杖（{@code ModItems.GUIDANCE_CANE}）探测前方方块，以发光轮廓短暂看见环境；
+     *   附近生物的声音会以声纹标记 + 弱轮廓提示方位。
+     * - 服务端探测见 {@code org.agmas.noellesroles.game.blindness.CaneContactService}，
+     *   声纹见 {@code org.agmas.noellesroles.game.blindness.SoundEchoService}，
+     *   客户端渲染见 {@code org.agmas.noellesroles.client.blindness} 包。
+     */
+    public static final Holder<MobEffect> BLINDNESS_SICKNESS = register("blindness_sickness",
+            new org.agmas.noellesroles.content.effects.BlindnessSicknessEffect());
+
+    /**
+     * 2D 视角
+     * - 中性效果
+     * - 客户端固定侧视镜头。amplifier: 0=西边，1=东边，2=北边，3=南边，4=上方（0~3 为 2.5D 俯视侧视）；
+     *   5=西平面，6=东平面，7=北平面，8=南平面（与视点同高的纯平面视线，无俯角）。
+     *   行为见 {@code TwoDimensionalCameraClientHandle}，最终通过 AdvancedCameraDirector 接管相机。
+     * - 拥有该效果时，客户端会渲染指向当前 SAN 任务点的指引箭头（手持钥匙时额外指向自己房门），
+     *   见 {@code TwoDimensionalTaskArrowRenderer}。
+     */
+    public static final Holder<MobEffect> TWO_DIMENSIONAL_CAMERA = register("two_dimensional_camera",
+            new SimpleMobEffect(MobEffectCategory.NEUTRAL, 0x87CEFA));
+
+    /**
+     * 2D camera distance. Amplifier 0 keeps the legacy distance, each extra level moves farther away.
+     */
+    public static final Holder<MobEffect> TWO_DIMENSIONAL_CAMERA_DISTANCE = register("two_dimensional_camera_distance",
+            new SimpleMobEffect(MobEffectCategory.NEUTRAL, 0xB3E5FC));
+
+    /**
+     * 指针视角
+     * - 中性效果
+     * - 客户端显示鼠标指针，并让玩家朝向指针射线命中的方块/实体。
+     */
+    public static final Holder<MobEffect> POINTER = register("pointer",
+            new SimpleMobEffect(MobEffectCategory.NEUTRAL, 0xFFE082));
+
+    /** 视野迷雾：根据效果等级计算雾的可见距离（格）。1 级=2 格，每升 1 级多看 3 格。 */
+    public static float getVisionFogDistance(int amplifier) {
+        return 2.0f + Math.max(0, amplifier) * 3.0f;
+    }
+
+    /** 2D camera distance by potion amplifier. Level I = 28 blocks, +6 blocks per level. */
+    public static float getTwoDimensionalCameraDistance(int amplifier) {
+        return Mth.clamp(28.0f + Math.max(0, amplifier) * 6.0f, 8.0f, 64.0f);
+    }
+
+    /**
+     * 聊天混乱：拥有此效果的玩家发送的聊天消息内容会被随机替换为特殊字符
+     */
+    public static final Holder<MobEffect> CHAT_MUDDLEDNESS = register("chat_muddledness",
+            new SimpleMobEffect(MobEffectCategory.HARMFUL, 0x8B4513));
+
+    /**
+     * 听觉干扰
+     * - 有害效果，橘红色
+     * - 受影响的玩家耳边会循环播放干扰音频，无法通过调节游戏音量屏蔽
+     * - 使用 SoundSource.MASTER 确保音频始终播放
+     */
+    public static final Holder<MobEffect> TINGJUEGANRAO = register("tingjueganrao",
+            new SimpleMobEffect(MobEffectCategory.HARMFUL, 0xFF6600));
+
+    /**
+     * 视觉干扰
+     * - 有害效果，紫灰色
+     * - 受影响的玩家屏幕会出现随机分布的白色、灰色、黑色像素点，造成花屏效果
+     * - 客户端 HUD overlay 渲染，见 {@code VisualInterferenceOverlay}
+     */
+    public static final Holder<MobEffect> SHIJUEGANRAO = register("shijueganrao",
+            new SimpleMobEffect(MobEffectCategory.HARMFUL, 0x9966CC));
+
+    /**
+     * 攻击间隔取消
+     * - 有益效果，金色
+     * - 拥有此效果的玩家在效果持续时间内左键攻击间隔取消
+     */
+    public static final Holder<MobEffect> GONGJIJIANGEOFF = register("gongjijiangeoff",
+            new SimpleMobEffect(MobEffectCategory.BENEFICIAL, 0xFFD700));
+
+    /**
+     * 噩梦效果（梦魇角色）
+     * - 有害效果，暗紫色
+     * - 1层: 缓慢I + 每秒降低1点理智值，可被心理学家治疗消除
+     * - 2层: 缓慢I + 每秒降低1点理智值 + 每15秒获得5秒黑暗效果，不可被心理学家治疗消除
+     */
+    public static final Holder<MobEffect> NIGHTMARE = register("nightmare", new NightmareEffect());
+
+    /**
+     * 领域标记（各领域共享）：
+     * - 中性效果，幽紫色
+     * - amplifier 0 = 愚者塔罗会开会领域，1 = 咒术师灰髓之境角斗场领域
+     * - 拥有此效果的玩家正处于某个领域中，无法被拉入另一个领域；
+     * 由各领域在进入时授予对应等级，离场时移除。
+     */
+    public static final Holder<MobEffect> DOMAIN_MARK = register("domain_mark",
+            new SimpleMobEffect(MobEffectCategory.NEUTRAL, 0x9B59B6));
+
+    /**
+     * 破镜重圆：客户端世界坍缩回溯特效。
+     * <ul>
+     * <li>生效即视野震颤</li>
+     * <li>默认 4 秒后周围方块由外向内向下坍缩，10 秒时完全坍缩；药水更短时会按剩余时间加速崩解</li>
+     * <li>效果结束后面块由内向外升起还原</li>
+     * </ul>
+     * 方块坍缩/还原仅在客户端进行，见 {@code MirrorReunionSceneManager}。
+     */
+    public static final Holder<MobEffect> MIRROR_REUNION = register("mirror_reunion",
+            new SimpleMobEffect(MobEffectCategory.HARMFUL, 0xB8C8D8));
+
+    /**
+     * 箱庭视野：自动切割遮挡面效果标记。
+     * 行为见 {@code HakoniwaVisionClientHandle}；区块网格级的方块剔除见
+     * {@code mixin/client/hakoniwa} 与 sodium 兼容层 {@code mixin/compat/sodium}。
+     */
+    public static final Holder<MobEffect> HAKONIWA_VISION = register("hakoniwa_vision",
+            new SimpleMobEffect(MobEffectCategory.NEUTRAL, 0x9CCFB8));
+
+    /**
+     * 胆小鬼修饰符的标记效果（修饰符 {@code noellesroles:coward} 持续挂载）。
+     * <p>死亡反应由 {@code DeathReactionHandler} 监听并触发。</p>
+     */
+    public static final Holder<MobEffect> COWARD = register("coward",
+            new SimpleMobEffect(MobEffectCategory.HARMFUL, 0x6B8E6B));
+
+    /** 胆小鬼被面前的死亡触发时短暂僵住并发抖。 */
+    public static final Holder<MobEffect> FEAR = register("fear",
+            new SimpleMobEffect(MobEffectCategory.HARMFUL, 0x4A3C6E));
+
+    /**
+     * 暴怒修饰符的标记效果（修饰符 {@code noellesroles:rage} 持续挂载）。
+     * <p>死亡反应由 {@code DeathReactionHandler} 监听并触发。</p>
+     */
+    public static final Holder<MobEffect> RAGE = register("rage",
+            new SimpleMobEffect(MobEffectCategory.HARMFUL, 0xC41E1E));
+
+    /** 暴怒被附近的死亡触发时进入短时爆发状态。 */
+    public static final Holder<MobEffect> RAGE_SURGE = register("rage_surge",
+            new SimpleMobEffect(MobEffectCategory.HARMFUL, 0xFF2020));
+
+    /**
+     * 怯懦修饰符的标记效果（修饰符 {@code noellesroles:cowardice} 持续挂载）。
+     * <p>死亡反应由 {@code DeathReactionHandler} 监听并触发。</p>
+     */
+    public static final Holder<MobEffect> COWARDICE = register("cowardice",
+            new SimpleMobEffect(MobEffectCategory.HARMFUL, 0x8A7A4A));
+
+    /**
+     * 注册药水效果到注册表
+     */
+
+    /**
+     * 构造一个参数与原效果一致的 {@link MobEffectInstance}（纯包装，便于复制效果参数）。
+     */
+    public static MobEffectInstance of(Holder<MobEffect> holder, int time, int amplifier, boolean ambient,
+            boolean showParticles, boolean showIcon) {
+        return new MobEffectInstance(
+                holder,
+                time,
+                amplifier,
+                ambient,
+                showParticles,
+                showIcon);
+    }
+
+    private static Holder<MobEffect> register(String id, MobEffect statusEffect) {
+        return Registry.registerForHolder(BuiltInRegistries.MOB_EFFECT, Noellesroles.id(id), statusEffect);
+    }
+
+    private static int getAmplifier(LivingEntity entity, Holder<MobEffect> effect) {
+        MobEffectInstance instance = entity.getEffect(effect);
+        return instance != null ? instance.getAmplifier() : -1;
+    }
+
+    /**
+     * 领域标记：返回玩家所处领域的等级（0=愚者塔罗会，1=咒术师灰髓之境）；不在任何领域返回 -1。
+     */
+    public static int getDomainMarkLevel(LivingEntity entity) {
+        return getAmplifier(entity, DOMAIN_MARK);
+    }
+
+    /**
+     * 玩家当前是否处于任意一个领域中（即拥有领域标记效果）。
+     */
+    public static boolean isInAnyDomain(LivingEntity entity) {
+        return entity.hasEffect(DOMAIN_MARK);
+    }
+
+    /**
+     * 获取转向受限灵敏度乘数
+     * @param entity 实体
+     * @return 灵敏度乘数（无效果时返回 1.0，有效果时返回一个较低值）
+     */
+    public static float getTurnWeakSensitivityFactor(LivingEntity entity) {
+        if (!entity.hasEffect(TURN_WEAK)) {
+            return 1.0f;
+        }
+        // 0.05 = 原始灵敏度的 5%，后续可根据测试调整
+        return 0.05f;
+    }
+
+    public static float getMoodDrainMultiplier(LivingEntity entity) {
+        if (entity.hasEffect(MOOD_DRAIN_IMMUNITY)) {
+            return 0f;
+        }
+        int amp = getAmplifier(entity, MOOD_DRAIN_REDUCTION);
+        if (amp < 0) {
+            return 1f;
+        }
+        return Mth.clamp(1f - 0.3f * (amp + 1), 0f, 1f);
+    }
+
+    public static float getMoodRegenPerTick(LivingEntity entity) {
+        int amp = getAmplifier(entity, MOOD_REGENERATION);
+        if (amp < 0) {
+            return 0f;
+        }
+        return 0.005f * (amp + 1);
+    }
+
+    public static boolean hasInfiniteStamina(LivingEntity entity) {
+        return entity.hasEffect(INFINITE_STAMINA);
+    }
+
+    public static float getStaminaCapacityMultiplier(LivingEntity entity) {
+        int amp = getAmplifier(entity, STAMINA_BOOST);
+        if (amp < 0) {
+            return 1f;
+        }
+        return 1f + 0.35f * (amp + 1);
+    }
+
+    public static float getStaminaRecoveryMultiplier(LivingEntity entity) {
+        int amp = getAmplifier(entity, STAMINA_RECOVERY);
+        if (amp < 0) {
+            return 1f;
+        }
+        return 1f + 0.75f * (amp + 1);
+    }
+
+    public static float getLowSanShaderResistance(LivingEntity entity) {
+        int amp = getAmplifier(entity, LOW_SAN_SHADER_RESISTANCE);
+        if (amp < 0) {
+            return 0f;
+        }
+        return Mth.clamp(0.25f * (amp + 1), 0f, 1f);
+    }
+
+    public static float getHeavyMetalPitchRatio(LivingEntity entity) {
+        int amp = getAmplifier(entity, HEAVY_METAL_VOICE);
+        if (amp < 0) {
+            return 1f;
+        }
+        return Mth.clamp(1f - 0.15f * (amp + 1), 0.4f, 1f);
+    }
+
+    public static float getVoiceRangeMultiplier(LivingEntity entity) {
+        int amp = getAmplifier(entity, VOICE_RANGE_BOOST);
+        if (amp < 0) {
+            return 1f;
+        }
+        return 1f + (amp + 1);
+    }
+
+    public static int getVoiceEchoCount(LivingEntity entity) {
+        int amp = getAmplifier(entity, VOICE_ECHO);
+        if (amp < 0) {
+            return 0;
+        }
+        return Mth.clamp(amp + 1, 1, 5);
+    }
+
+    /**
+     * 初始化所有药水效果
+     */
+    public static boolean pierceDeath = false;
+
+    public static void init() {
+        // 把说话者侧的语音效果（重金属/回响）同步给所有客户端，
+        // 否则听者客户端查不到说话者的效果，OpenAL 语音处理无法生效。
+        org.agmas.noellesroles.voice.VoiceEffectSync.init();
+        // 把伪装效果同步给所有客户端，否则观察者客户端查不到其他玩家的伪装，
+        // 导致“伪装只有自己能看到”。
+        io.wifi.starrailexpress.content.item.DisguiseEffectSync.init();
+        // 把“脚步消失”效果同步给所有客户端，否则其它玩家侧的脚步声/疾跑粒子拦截查不到该效果。
+        org.agmas.noellesroles.init.FootstepVanishEffectSync.init();
+        // 把怀旧者“里世界标记”效果同步给所有客户端，否则其它客户端查不到怀旧者的里世界状态，
+        // 导致手持物品仍显示 / 仍能被杀手透视。
+        NostalgistBackworldEffectSync.init();
+        // 把「里世界·同界描边」标记同步给所有客户端：原版只把效果下发给自己，
+        // 而里世界内互相可见需要每个客户端都能读到「对方也在里世界」。
+        org.agmas.noellesroles.game.backworld.BackworldOutlineEffectSync.init();
+        WraithDimensionEffectSync.init();
+        // 失明症：导盲杖探测服务（含掉线清理）与生物声纹扫描服务
+        org.agmas.noellesroles.game.blindness.CaneContactService.register();
+        org.agmas.noellesroles.game.blindness.SoundEchoService.register();
+        AllowPlayerDeathWithKiller.EVENT.register((player, killer, deathReason) -> {
+            if (pierceDeath) {
+                pierceDeath = false;
+                return true;
+            }
+            if (deathReason.equals(GameConstants.DeathReasons.FELL_OUT_OF_TRAIN)) {
+                return true;
+            }
+            if (player.hasEffect(ModEffects.INVINCIBLE)) {
+                var gameComponent = SREGameWorldComponent.KEY.get(player.level());
+                if (ModRoles.isLooseEndVariant(gameComponent.getRole(killer))) {
+                    return true;
+                }
+                return false;
+            }
+            if (deathReason.equals(Noellesroles.id("bomb_death")))
+                return true;
+            if (player.hasEffect(ModEffects.TAROT_ASSEMBLY)) {
+                if (player.position().z >= 19000)
+                    return false;
+            }
+            return true;
+        });
+    }
+}

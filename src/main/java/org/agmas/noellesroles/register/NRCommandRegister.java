@@ -1,0 +1,46 @@
+package org.agmas.noellesroles.register;
+
+import org.agmas.noellesroles.commands.*;
+
+/**
+ * Noellesroles 命令注册，从 {@link org.agmas.noellesroles.Noellesroles#onInitialize()} 中按类别剥离归一化而来。
+ */
+public class NRCommandRegister {
+
+    public static void registerCommands() {
+        BroadcastCommand.register();
+        NewspaperCommand.register();
+        AdminFreeCamCommand.register();
+        SetRoleMaxCommand.register();
+        NoellesrolesConfigCommand.register();
+        VTCommand.register();
+        org.agmas.noellesroles.commands.HeliumCommand.register();
+        ExtraItemsManagerCommand.register();
+        GameUtilsCommand.register();
+        RoomCommand.register();
+        StuckCommand.register();
+        DisplayItemCommand.register();
+        GoodsManagerCommand.register();
+        DynamicShopCommand.register();
+        WheelchairFieldItemCommand.register();
+        GamblerMiracleCommand.register();
+        EggClearCommand.register();
+        MirrorReunionEndEggCommand.register();
+        MurderTimeCommand.register();
+
+        // 注册疫使测试指令
+        org.agmas.noellesroles.commands.InfectedCommand.register();
+
+        // 强制停止暴风雪指令
+        StopSnowCommand.register();
+
+        // 旁观者小游戏掌机面板指令
+        SpectorLittleGamesCommand.register();
+
+        // 对话 NPC 管理指令
+        DialogNpcCommand.register();
+
+        // 虚拟血量（Dream 体系）管理指令
+        VirtualHealthCommand.register();
+    }
+}

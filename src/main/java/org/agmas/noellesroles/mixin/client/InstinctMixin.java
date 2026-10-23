@@ -1,0 +1,92 @@
+package org.agmas.noellesroles.mixin.client;
+
+import io.wifi.starrailexpress.cca.SREGameWorldComponent;
+import io.wifi.starrailexpress.client.SREClient;
+import net.minecraft.client.KeyMapping;
+import net.minecraft.client.Minecraft;
+import net.minecraft.world.entity.player.Player;
+import org.agmas.noellesroles.game.roles.killer.manipulator.ManipulatorPlayerComponent;
+import org.agmas.noellesroles.game.roles.neutral.pelican.PelicanManager;
+import org.agmas.noellesroles.game.roles.special.better_vigilante.BetterVigilantePlayerComponent;
+import org.agmas.noellesroles.role.ModRoles;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+
+@Mixin(SREClient.class)
+public abstract class InstinctMixin {
+
+    @Shadow
+    public static KeyMapping instinctKeybind;
+
+    @Inject(method = "isInstinctEnabled", at = @At("HEAD"), cancellable = true)
+    private static void b(CallbackInfoReturnable<Boolean> cir) {
+        Player player = Minecraft.getInstance().player;
+        if (player == null)
+            return;
+
+        // 迷雾区域内关闭本能
+        if (org.agmas.noellesroles.client.scene.SceneFogClient.isLocalPlayerInFog()) {
+            cir.setReturnValue(false);
+            cir.cancel();
+            return;
+        }
+
+        // 鹈鹕肚内玩家不能开启本能
+        if (PelicanManager.isStashed(player)) {
+            cir.setReturnValue(false);
+            cir.cancel();
+            return;
+        }
+
+        // 检查玩家是否正在被操纵师控制 - 如果是，禁止使用杀手本能
+        if (noellesroles$isPlayerBeingControlled(player)) {
+            cir.setReturnValue(false);
+            cir.cancel();
+            return;
+        }
+
+        // 鬼眼·杨间 诡域内：禁止开启杀手透视
+        // 会议中被施加 NO_INSTINCT 时同样禁止
+        if (player.hasEffect(org.agmas.noellesroles.init.ModEffects.EERIE_DOMAIN)
+                || player.hasEffect(org.agmas.noellesroles.init.ModEffects.NO_INSTINCT)) {
+            cir.setReturnValue(false);
+            cir.cancel();
+            return;
+        }
+        SREGameWorldComponent gameWorldComponent = (SREGameWorldComponent) SREGameWorldComponent.KEY.get(player.level());
+        if (gameWorldComponent.isRole(player, ModRoles.BETTER_VIGILANTE)) {
+            var betterC = BetterVigilantePlayerComponent.KEY.get(player);
+            if (betterC.lastStandActivated) {
+                cir.setReturnValue(true);
+                cir.cancel();
+            }
+        }
+    }
+
+    /**
+     * 检查玩家是否正在被操纵师控制
+     */
+    @Unique
+    private static boolean noellesroles$isPlayerBeingControlled(Player player) {
+        if (player == null)
+            return false;
+
+        // 遍历所有玩家，检查是否有操纵师正在控制当前玩家
+        for (Player otherPlayer : player.level().players()) {
+            SREGameWorldComponent gameWorldComponent = SREGameWorldComponent.KEY.get(otherPlayer.level());
+            if (gameWorldComponent.isRole(otherPlayer, ModRoles.MANIPULATOR)) {
+                ManipulatorPlayerComponent manipulatorComponent = ManipulatorPlayerComponent.KEY.get(otherPlayer);
+                if (manipulatorComponent.isControlling &&
+                        manipulatorComponent.target != null &&
+                        manipulatorComponent.target.equals(player.getUUID())) {
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+}
